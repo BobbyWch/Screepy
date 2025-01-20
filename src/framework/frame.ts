@@ -1,0 +1,78 @@
+import {Logger} from "@/modules/Logger";
+
+export const XFrame={
+	mounts: [] as Array<()=>void>,
+	mtd:false,
+	lMem:null,
+	mTime:0,
+	errT:0,
+	addMount(fn:()=>void):void{
+		this.mounts.push(fn)
+	},
+	doMount():void{
+		if (this.mtd) return
+		else {
+			let fn
+			for (fn of this.mounts){
+				fn()
+			}
+			this.mtd=true
+		}
+	},
+	wrapError(fn:Function,cb:Function):Function{
+		return function () {
+			try {
+				fn(...arguments)
+			} catch (e) {
+				if (e instanceof Error) {
+					let msg
+					if (cb){
+						try{
+							msg=cb(...arguments)
+						}catch (eCB){
+							msg="Error happened in Callback ------Stack Begin:\n"
+							msg+=_.escape(eCB.stack)
+							msg+="\n------End"
+						}
+					}
+					msg += "\nError stack:\n" + _.escape(e.stack)
+					console.log(msg)
+					Game.notify(msg, 30)
+				} else throw e
+			}
+		}
+	},
+	load():void{
+		global.Gtime=Game.time;
+		if (this.lMem) {
+			if (global.Gtime == this.mTime + 1){
+				// @ts-ignore
+				delete global.Memory;
+				// @ts-ignore
+				global.Memory = this.lMem;
+				// @ts-ignore
+				RawMemory._parsed = this.lMem;
+			}else {
+				const cpu=Game.cpu.getUsed()
+				Memory.rooms; // forces parsing
+				console.log(`Reparse memory costs ${Game.cpu.getUsed()-cpu} cpu`)
+				// @ts-ignore
+				this.lMem = RawMemory._parsed;
+				this.errT++
+				if (this.errT>4){
+					this.globalUniqueId = this.globalUniqueId || Math.random().toString(16).slice(2);
+					Logger.err("Global switched!"+ Game.time+ '/'+ this.mTime+ '(id: ' + this.globalUniqueId + ')',true);
+				}
+			}
+		} else {
+			const cpu=Game.cpu.getUsed()
+			Memory.rooms; // forces parsing
+			console.log(`Parse memory costs ${Game.cpu.getUsed()-cpu} cpu`)
+			// @ts-ignore
+			this.lMem = RawMemory._parsed;
+		}
+		this.mTime = global.Gtime;
+
+		this.doMount()
+	}
+}

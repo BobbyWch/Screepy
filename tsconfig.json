@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "moduleResolution": "Node",
+    "outDir": "dist/",
+    "baseUrl": "./",
+    "sourceMap": false,
+    "allowSyntheticDefaultImports": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": [
+
+  ],
+  "include": [
+    "src/**/*",
+    "node_modules/@types/node/globals.d.ts"
+  ]
+}
