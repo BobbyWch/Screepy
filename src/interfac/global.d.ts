@@ -5,3 +5,7 @@ declare namespace NodeJS{
 	}
 }
 declare var global: NodeJS.Global & typeof globalThis;
+interface Memory{
+	colony:{[rn:string]:ColonyMemory};
+	units:{[name:string]:UnitMemory};
+}

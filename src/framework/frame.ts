@@ -1,4 +1,5 @@
 import {Logger} from "@/modules/Logger";
+import {uu} from "@/modules/util";
 
 export const XFrame={
 	mounts: [] as Array<()=>void>,
@@ -12,6 +13,7 @@ export const XFrame={
 	doMount():void{
 		if (this.mtd) return
 		else {
+			this.memoryInit()
 			let fn
 			for (fn of this.mounts){
 				fn()
@@ -44,6 +46,7 @@ export const XFrame={
 	},
 	load():void{
 		global.Gtime=Game.time;
+		uu.cNum=0
 		if (this.lMem) {
 			if (global.Gtime == this.mTime + 1){
 				// @ts-ignore
@@ -74,5 +77,9 @@ export const XFrame={
 		this.mTime = global.Gtime;
 
 		this.doMount()
+	},
+	memoryInit():void{
+		if (!Memory.colony) Memory.colony={}
+		if (!Memory.units) Memory.units={}
 	}
 }

@@ -1,0 +1,4 @@
+interface UnitMemory{
+    inQueue:boolean
+
+}

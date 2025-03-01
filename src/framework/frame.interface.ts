@@ -4,4 +4,8 @@ export interface RuntimeProto{
 	addColony(colony:Colony):void;
 	removeColony(colony:Colony):void;
 	cls:Colony[];
+	shdUpd:RuntimeObject[];
+
+	update():void
+	run():void;
 }

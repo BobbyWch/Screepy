@@ -1,5 +1,5 @@
 interface RuntimeObject{
-	_ke:string;
+	// _name:string;
 	run():void;
 	update():void;
 }
