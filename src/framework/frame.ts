@@ -12,6 +12,7 @@ export const XFrame={
 	doMount():void{
 		if (this.mtd) return
 		else {
+			this.memoryInit()
 			let fn
 			for (fn of this.mounts){
 				fn()
@@ -74,5 +75,9 @@ export const XFrame={
 		this.mTime = global.Gtime;
 
 		this.doMount()
+	},
+	memoryInit():void{
+		if (!Memory.colony) Memory.colony={}
+		if (!Memory.units) Memory.units={}
 	}
 }
