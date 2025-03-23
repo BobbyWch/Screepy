@@ -1,3 +1,22 @@
+import {XFrame} from "@/framework/frame";
+
+XFrame.addMount(()=>{
+    // Creep.prototype.inDest=function (rn,shard){
+    // 	return this.room.name==rn&&(!shard||Game.shard.name==shard)
+    // }
+    Creep.prototype.bodyInfo=function (){
+        if (!this._bif){
+            let bodies=this.body,b
+            const result={}
+            for (b of bodies){
+                if (result[b.type]) result[b.type]++
+                else result[b.type]=1
+            }
+            this._bif=result
+        }
+        return this._bif
+    }
+})
 export function mountCreep() {
 
 	// const canExtend = ["target", "role", "autoRe", "belong"];
@@ -25,9 +44,7 @@ export function mountCreep() {
 	// 		this.moveTo(Game.flags[this.memory.ways[0]])
 	// 	}
 	// }
-	// Creep.prototype.inDest=function (rn,shard){
-	// 	return this.room.name==rn&&(!shard||Game.shard.name==shard)
-	// }
+
 	// Creep.prototype.getEnergyFrom = function (target) {
 	// 	if (fastNear(this.pos, target.pos)) {
 	// 		if (target.store) return this.withdraw(target, RESOURCE_ENERGY)

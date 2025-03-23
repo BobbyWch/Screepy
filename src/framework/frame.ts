@@ -1,6 +1,7 @@
 import {Logger} from "@/modules/Logger";
 import {uu} from "@/modules/util";
 
+export let OLD_MEMORY=false
 export const XFrame={
 	mounts: [] as Array<()=>void>,
 	mtd:false,
@@ -55,6 +56,7 @@ export const XFrame={
 				global.Memory = this.lMem;
 				// @ts-ignore
 				RawMemory._parsed = this.lMem;
+				OLD_MEMORY=true
 			}else {
 				const cpu=Game.cpu.getUsed()
 				Memory.rooms; // forces parsing
@@ -66,6 +68,7 @@ export const XFrame={
 					this.globalUniqueId = this.globalUniqueId || Math.random().toString(16).slice(2);
 					Logger.err("Global switched!"+ Game.time+ '/'+ this.mTime+ '(id: ' + this.globalUniqueId + ')',true);
 				}
+				OLD_MEMORY=false
 			}
 		} else {
 			const cpu=Game.cpu.getUsed()
@@ -73,6 +76,7 @@ export const XFrame={
 			console.log(`Parse memory costs ${Game.cpu.getUsed()-cpu} cpu`)
 			// @ts-ignore
 			this.lMem = RawMemory._parsed;
+			OLD_MEMORY=false
 		}
 		this.mTime = global.Gtime;
 

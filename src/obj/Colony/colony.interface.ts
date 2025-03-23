@@ -4,6 +4,7 @@ const enum ColonyState{
 interface ColonyMemory{
 	state:ColonyState
 	hatch?:HatcheryMemory
+	tower?:TowerMemory
 	workGroup:WorkGroupMemory[]
 
 }

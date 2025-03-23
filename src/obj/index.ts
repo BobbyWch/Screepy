@@ -2,6 +2,7 @@ import {Runtime} from "@/framework/runtime";
 import {Colony} from "@/obj/Colony/colony";
 import {XFrame} from "@/framework/frame";
 import {uu} from "@/modules/util";
+import {Unit} from "@/obj/Unit/unit";
 
 XFrame.addMount(()=>{
 	let key:string,room:Room
@@ -20,6 +21,10 @@ XFrame.addMount(()=>{
 				Runtime.addColony(c)
 			}
 		}
+	}
+
+	for (key in Memory.units){
+		Runtime.addUnit(new Unit(key,undefined))
 	}
 
 })

@@ -6,7 +6,7 @@
     "baseUrl": "./",
     "sourceMap": false,
     "allowSyntheticDefaultImports": true,
-    "noUnusedLocals": true,
+//    "noUnusedLocals": true,
 //    "strictNullChecks": true,
 //    "alwaysStrict": true,
     "paths": {

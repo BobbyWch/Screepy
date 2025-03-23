@@ -9,6 +9,9 @@ interface Room{
 	observer:StructureObserver;
 	HostileGroup: Id<Creep>[];
 
+	_scs:Source[]
+
+
 	callAfterBuilt():Structure;
 	flushSite():null|ConstructionSite;
 	guard():void;
@@ -47,6 +50,8 @@ interface Room{
 
 	Tower_Fill():void;
 	Tower_Action(action:"attack"|"heal"|"repair",target:AnyCreep):void
+
+	sources():Source[]
 }
 interface RoomProperty{
 	slowPower:number;
@@ -124,14 +129,15 @@ interface RepairInfo{
 	endTime:number;
 }
 interface IdCache{
-	_pcs:Id<StructurePowerSpawn>;
-	_nu:Id<StructureNuker>;
-	_fa:Id<StructureFactory>;
-	_cl:Id<StructureLink>;
-	_ul:Id<StructureLink>;
-	_nt:Id<StructureTower>;
-	_ob:Id<StructureObserver>;
+	ps:Id<StructurePowerSpawn>;
+	nu:Id<StructureNuker>;
+	fa:Id<StructureFactory>;
+	cl:Id<StructureLink>;
+	ul:Id<StructureLink>;
+	nt:Id<StructureTower>;
+	ob:Id<StructureObserver>;
 	pc:string;
+	ss:Id<Source>[]
 }
 interface UpgradeInfo{
 	level:number;

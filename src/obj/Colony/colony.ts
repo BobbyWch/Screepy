@@ -1,19 +1,24 @@
 import {WorkGroup} from "@/obj/WorkGroup/workgroup";
 import {Hatchery} from "@/obj/Colony/parts/hatchery";
+import {TowerAI} from "@/obj/Colony/parts/tower";
+import {OLD_MEMORY} from "@/framework/frame";
 
 export class Colony implements RuntimeObject{
 	room:Room
 	hatchery:Hatchery
+	towerAI:TowerAI
 
 	update():void{
 		this.room=Game.rooms[this._name]
 	}
 
-	workGroups:WorkGroup[]
+	workGroups:WorkGroup<any>[]
 
 	run(): void {
 		this.stateWork()
 
+
+		this.hatchery.run()
 		
 	}
 	stateWork():void{
@@ -29,9 +34,10 @@ export class Colony implements RuntimeObject{
 	addWorkGroup(type:WorkGroupType){
 		this.workGroups[type]=WorkGroup.createByType(this,type)
 	}
-
+	_mm:ColonyMemory
 	get memory():ColonyMemory{
-		return Memory.colony[this._name]
+		if (OLD_MEMORY&&this._mm) return this._mm
+		else return (this._mm=Memory.colony[this._name])
 	}
 	private static colonies:{[rn:string]:Colony}={}
 	static get(room:Room):Colony{
@@ -50,6 +56,7 @@ export class Colony implements RuntimeObject{
 		} as ColonyMemory
 
 		this.hatchery=new Hatchery(this)
+		this.towerAI=new TowerAI(this)
 		let key
 		for (key in this.memory.workGroup){
 			this.workGroups[key]=WorkGroup.createByType(this,key)
@@ -58,5 +65,7 @@ export class Colony implements RuntimeObject{
 		Colony.colonies[room.name]=this
 	}
 	_name: string;//房间名
+
+
 
 }

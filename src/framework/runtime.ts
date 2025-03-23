@@ -1,9 +1,10 @@
-import {RuntimeProto} from "@/framework/frame.interface";
 import {Colony} from "@/obj/Colony/colony";
 import {uu} from "@/modules/util";
+import {Unit} from "@/obj/Unit/unit";
 
-export const Runtime:RuntimeProto={
+export const Runtime={
 	cls:[] as Colony[],
+	units:[] as Unit[],
 	shdUpd:[] as RuntimeObject[],
 	addColony(colony: Colony): void {
 		this.cls.push(colony)
@@ -13,8 +14,16 @@ export const Runtime:RuntimeProto={
 		uu.arrayRemove(colony,this.cls)
 		uu.arrayRemove(colony,this.shdUpd)
 	},
+	addUnit(unit:Unit):void{
+		this.units.push(unit)
+		this.shdUpd.push(unit)
+	},
+	removeUnit(unit:Unit):void{
+		uu.arrayRemove(Unit,this.units)
+		uu.arrayRemove(Unit,this.shdUpd)
+	},
 	run(){
-		const toRun:Array<RuntimeObject[]>=[this.cls]
+		const toRun:Array<RuntimeObject[]>=[this.cls,this.units]
 		let i,j,aa
 		for (i=0;i<toRun.length;i++){
 			aa=toRun[i]

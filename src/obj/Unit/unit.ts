@@ -1,14 +1,13 @@
-import {Hatchery} from "@/obj/Colony/parts/hatchery";
-import {uu} from "@/modules/util";
+import {WorkGroup} from "@/obj/WorkGroup/workgroup";
+import {OLD_MEMORY} from "@/framework/frame";
+import {UnitTask} from "@/obj/Unit/tasks/unit_task";
+import {Colony} from "@/obj/Colony/colony";
 
 export class Unit implements RuntimeObject{
-	update():void{
-		if (this.memory){
+	group:WorkGroup<any>
 
-		}else {
-			this.creep=Game.creeps[this._name]
-		}
-
+	update():void {
+		this.creep = Game.creeps[this._name]
 	}
 
 	run(): void {
@@ -16,39 +15,60 @@ export class Unit implements RuntimeObject{
 
 		}
 	}
-
+	_mm:UnitMemory
 	get memory():UnitMemory{
-		return Memory.units[this._name]
+		if (OLD_MEMORY&&this._mm) return this._mm
+		else return (this._mm=Memory.units[this._name])
 	}
 
 	private static units:{[rn:string]:Unit}={}
 	static get(creep:Creep):Unit{
-		return this.units[creep.name]||(this.units[creep.name]=Unit.createByCreep(creep))
+		return this.units[creep.name]||(this.units[creep.name]=new Unit(creep.name,creep.memory.belong))
 	}
-	static createByCreep(creep:Creep):Unit{
-		const u=new Unit()
-		u.creep=creep
-		u._name=creep.name
-		if(!Memory.units[creep.name]) Memory.units[creep.name]={} as UnitMemory
-		u.memory.inQueue=true
-		return u
-	}
-	static spawnNew(hatchery:Hatchery,info:SpawnInfo):Unit{
-		const u=new Unit()
-		if (!info.name) info.name=uu.getCreepName()
-		u._name=info.name
-		// u.spawning=true
-		if(!Memory.units[info.name]) Memory.units[info.name]={
-			inQueue:true
-		}
-		return u
-	}
-	// static createByWG(workgroup:WorkGroup):Unit{
-	// 	return null
-	// }
 
-	protected creep:Creep
-	private constructor() {
+	creep:Creep
+
+	public constructor(name:string,home:string) {
+		this._name=name
+		if (!Memory.units[name]){
+			if (home){
+				Memory.units[name]={home} as UnitMemory
+			}else throw new Error("missing home")
+		}
+		if (this.memory.group) this.group=Colony.get(Game.rooms[home]).workGroups[this.memory.group]
+
+		Unit.units[name]=this
 	}
+
 	_name: string;
+}
+
+export class TaskUnit extends Unit{
+	theTask:UnitTask<any>
+
+	run() {
+		super.run();
+		let result
+		while (this.theTask){
+			result=this.theTask.run()
+			if (!result) break
+			//TODO 处理result
+
+			if (this.memory.taskQueue.length){
+				this.memory.currTask=this.memory.taskQueue.shift()
+				this.theTask=UnitTask.createTask(this.memory.currTask,this)
+			}else {
+				delete this.theTask
+				delete this.memory.currTask
+			}
+		}
+	}
+
+	get memory():TaskUnitMemory{
+		return super.memory as TaskUnitMemory
+	}
+
+	getTaskMem(type:UnitTaskType):TaskMemory {
+		return this.memory.taskData[type]||(this.memory.taskData[type]={})
+	}
 }

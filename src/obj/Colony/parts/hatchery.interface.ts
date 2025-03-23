@@ -20,3 +20,10 @@ interface HatcheryMemory{
 }
 
 type ZippedBodyInfo=Array<[BodyPartConstant,number]>
+const enum BodyGenType{
+	ZIP,RAW
+}
+interface BodyGen{
+	type:BodyGenType
+	data:ZippedBodyInfo|BodyPartConstant[]
+}

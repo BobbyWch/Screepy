@@ -1,16 +1,16 @@
 import {Unit} from "@/obj/Unit/unit";
 import {Colony} from "@/obj/Colony/colony";
-import {XFrame} from "@/framework/frame";
+import {OLD_MEMORY, XFrame} from "@/framework/frame";
 import {Roles} from "@/obj/Colony/parts/hatchery";
 
 
-export class WorkGroup implements RuntimeObject{
+export abstract class WorkGroup<memType extends WorkGroupMemory> implements RuntimeObject{
 	units:{[role:string]:Unit[]};
 	// plan:WorkerPlan;
 	colony:Colony;
 	type:WorkGroupType
 
-	constructor(colony:Colony,type:WorkGroupType) {
+	protected constructor(colony:Colony, type:WorkGroupType) {
 		this.colony=colony
 		this.type=type
 		if (!this.memory) {
@@ -24,12 +24,14 @@ export class WorkGroup implements RuntimeObject{
 	update(): void {
 		
 	}
-	get memory():WorkGroupMemory{
-		return this.colony.memory.workGroup[this.type]
+	_mm:memType
+	get memory():memType{
+		if (OLD_MEMORY&&this._mm) return this._mm
+		else return (this._mm=this.colony.memory.workGroup[this.type] as memType)
 	}
 
 	static wgClasses:{}
-	static createByType(colony:Colony,type:WorkGroupType):WorkGroup{
+	static createByType(colony:Colony,type:WorkGroupType):WorkGroup<any>{
 		return new this.wgClasses[type](colony)
 	}
 
@@ -40,37 +42,31 @@ XFrame.addMount(()=>{
 	//
 	// }
 
-	class UpgradeGroup extends WorkGroup{
-		constructor(colony:Colony) {
-			super(colony,WorkGroupType.UPGRADE);
-		}
-
-		get memory(): HarvestGMemory {
-			return this.colony.memory.workGroup[WorkGroupType.UPGRADE] as HarvestGMemory
-		}
-	}
-	class HarvestGroup extends WorkGroup {
+	// class UpgradeGroup extends WorkGroup{
+	// 	constructor(colony:Colony) {
+	// 		super(colony,WorkGroupType.UPGRADE);
+	// 	}
+	//
+	//
+	// }
+	class HarvestGroup extends WorkGroup<HarvestGMemory> {
 		constructor(colony: Colony) {
 			super(colony, WorkGroupType.HARVEST);
 			if (!this.memory) {
 
 				this.colony.memory.workGroup[WorkGroupType.HARVEST]={
-					num:colony.room.find(FIND_SOURCES).length
+					num:this.colony.room.sources().length,
+					// id:sou
 				} as HarvestGMemory
 			}
 		}
 		run() {
 			if (this.units[Roles.harvester].length<this.memory.num){
-				this.units[Roles.harvester].push(this.colony.hatchery.addTask({_role:Roles.harvester}))
+				// this.units[Roles.harvester].push(this.colony.hatchery.spawn({_role:Roles.harvester}))
 			}
 		}
-
-
-		get memory(): HarvestGMemory {
-			return this.colony.memory.workGroup[WorkGroupType.HARVEST] as HarvestGMemory
-		}
 	}
-	WorkGroup.wgClasses[WorkGroupType.UPGRADE]=UpgradeGroup
+	// WorkGroup.wgClasses[WorkGroupType.UPGRADE]=UpgradeGroup
 	WorkGroup.wgClasses[WorkGroupType.HARVEST]=HarvestGroup
 
 })

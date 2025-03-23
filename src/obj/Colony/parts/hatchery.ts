@@ -1,6 +1,7 @@
 import {Colony} from "@/obj/Colony/colony";
 import {Unit} from "@/obj/Unit/unit";
 import {uu} from "@/modules/util";
+import {OLD_MEMORY} from "@/framework/frame";
 
 export class Hatchery{
 	colony:Colony
@@ -68,7 +69,6 @@ export class Hatchery{
 					}
 				}
 
-
 			}else {
 				this.memory.sleepTill=global.Gtime +_.min(this.memory.spawns.map(s=>Game.spawns[s]),
 						s=>s.spawning.remainingTime).spawning.remainingTime
@@ -76,8 +76,7 @@ export class Hatchery{
 
 		}
 	}
-	addTask(info:SpawnInfo):Unit{
-		const unit=Unit.spawnNew(this,info)
+	spawn(info:SpawnInfo):void{
 		if (!info._mem) info._mem={} as CreepMemory
 		if (info._mem.role) info._role=info._mem.role
 		else if (info._role) info._mem.role=info._role
@@ -97,12 +96,13 @@ export class Hatchery{
 		for (let i=0;i<t.length;i++){
 			if (info.priority>t[i].priority){
 				t.splice(i,0,spawnTask)
-				return unit;
 			}
 		}
 		t.push(spawnTask)
+	}
+	spawnUnit(unit:Unit){
+		const bodygen=unit.memory.body
 
-		return unit
 	}
 
 	getRoleBody(role:string):ZippedBodyInfo{
@@ -152,8 +152,10 @@ export class Hatchery{
 		}
 	}
 
+	_mm:HatcheryMemory
 	get memory():HatcheryMemory{
-		return this.colony.memory.hatch!
+		if (OLD_MEMORY&&this._mm) return this._mm
+		else return (this._mm=this.colony.memory.hatch)
 	}
 
 	static unzipBody(zippedBody:ZippedBodyInfo):BodyPartConstant[]{

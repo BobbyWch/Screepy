@@ -1,3 +1,5 @@
-export function mountRoom(){
+import {XFrame} from "@/framework/frame";
 
-}
+XFrame.addMount(()=>{
+
+})
