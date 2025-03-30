@@ -9,5 +9,27 @@ export const uu={
 		// noinspection LoopStatementThatDoesntLoopJS,UnnecessaryLocalVariableJS
 		for (const a in o) return a
 	},
-	getCreepName:()=>`${uu.cP}${global.Gtime%10000}_${uu.cNum++}`
+	getCreepName:()=>`${uu.cP}${global.Gtime%10000}_${uu.cNum++}`,
+	findPriority(arr:any,targets:any[],key?:string):any{
+		let j,tar
+		if (key){//按优先级查找对象，key为对象匹配时的键
+			for (let i=0;i<targets.length;i++){
+				tar=targets[i]
+				for (j=0;j<arr.length;j++){
+					if (arr[j][key]==tar){
+						return arr[j]
+					}
+				}
+			}
+		}else {
+			for (let i=0;i<targets.length;i++){
+				tar=targets[i]
+				for (j=0;j<arr.length;j++){
+					if (arr[j]==tar){
+						return arr[j]
+					}
+				}
+			}
+		}
+	}
 }

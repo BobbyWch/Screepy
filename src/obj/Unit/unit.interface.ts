@@ -3,6 +3,7 @@ interface UnitMemory{
     home:string
     group?:WorkGroupType
     body?:BodyGen
+    sleep:number
 }
 
 interface TaskUnitMemory extends UnitMemory{
@@ -11,11 +12,8 @@ interface TaskUnitMemory extends UnitMemory{
     taskData:{[type:number]:TaskMemory}
 }
 interface TaskMemory{
-
+    sleep:number
 }
 const enum UnitTaskType{
-    HARVEST,BUILD,UPGRADE
+    HARVEST = 0,BUILD = 1,UPGRADE = 2
 }
-
-const TASK_END=1
-const TASK_FAIL=2

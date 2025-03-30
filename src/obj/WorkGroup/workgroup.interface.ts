@@ -6,7 +6,7 @@ interface WorkerPlan{
 
 }
 interface WorkGroupMemory{
-
+	units:{[r:string]:string[]}
 }
 interface HarvestGMemory extends WorkGroupMemory{
 	num:number

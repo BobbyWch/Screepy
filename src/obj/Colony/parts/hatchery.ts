@@ -1,5 +1,5 @@
 import {Colony} from "@/obj/Colony/colony";
-import {Unit} from "@/obj/Unit/unit";
+import {TaskUnit, Unit} from "@/obj/Unit/unit";
 import {uu} from "@/modules/util";
 import {OLD_MEMORY} from "@/framework/frame";
 
@@ -76,6 +76,15 @@ export class Hatchery{
 
 		}
 	}
+	createUnit(bodyRole:string,noSpawn?:boolean):TaskUnit{
+		const unit=new TaskUnit(uu.getCreepName(),this.colony._name)
+		unit.memory.body={
+			data:this.getRoleBody(bodyRole),
+			type:BodyGenType.ZIP
+		}
+		if (!noSpawn) this.spawnUnit(unit)
+		return unit
+	}
 	spawn(info:SpawnInfo):void{
 		if (!info._mem) info._mem={} as CreepMemory
 		if (info._mem.role) info._role=info._mem.role
@@ -102,7 +111,21 @@ export class Hatchery{
 	}
 	spawnUnit(unit:Unit){
 		const bodygen=unit.memory.body
+		const spawnTask={
+			name:unit._name,
+			priority:5,
+			mem:{},
+			body:unit.memory.body.data,
+			isZippedBody:true
+		} as SpawnTask
 
+		const t=this.memory.task
+		for (let i=0;i<t.length;i++){
+			if (spawnTask.priority>t[i].priority){
+				t.splice(i,0,spawnTask)
+			}
+		}
+		t.push(spawnTask)
 	}
 
 	getRoleBody(role:string):ZippedBodyInfo{

@@ -18,6 +18,8 @@ export class Colony implements RuntimeObject{
 		this.stateWork()
 
 
+		let o
+		for (o of this.workGroups) if(o)o.run()
 		this.hatchery.run()
 		
 	}
