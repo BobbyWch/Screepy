@@ -1,21 +1,29 @@
 import {XFrame} from "@/framework/frame";
 
 XFrame.addMount(()=>{
-    // Creep.prototype.inDest=function (rn,shard){
-    // 	return this.room.name==rn&&(!shard||Game.shard.name==shard)
-    // }
+    Creep.prototype.buff=function (){
+        if (this.my) return global.Heap.creep[this.name]||(global.Heap.creep[this.name]={} as CreepBuffer)
+        else return global.Heap.enemyC[this.id]||(global.Heap.enemyC[this.id]={} as CreepBuffer)
+    }
+    /**
+     * 不考虑body血量
+     */
     Creep.prototype.bodyInfo=function (){
-        if (!this._bif){
+        if (!this.buff()._bif){
             let bodies=this.body,b
             const result={}
             for (b of bodies){
                 if (result[b.type]) result[b.type]++
                 else result[b.type]=1
             }
-            this._bif=result
+            this.buff()._bif=result
         }
-        return this._bif
+        return this.buff()._bif
     }
+    Creep.prototype.onTheEdge = function () {
+        return this.pos.x == 49 || this.pos.x == 0 || this.pos.y == 49 || this.pos.y == 0;
+    }
+
 })
 export function mountCreep() {
 

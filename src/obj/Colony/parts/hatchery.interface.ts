@@ -19,7 +19,7 @@ interface HatcheryMemory{
 	autoBoost:{[role:string]:MineralBoostConstant[]};
 }
 
-type ZippedBodyInfo=Array<[BodyPartConstant,number]>
+type ZippedBodyInfo=[BodyPartConstant,number][]
 const enum BodyGenType{
 	ZIP,RAW
 }

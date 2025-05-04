@@ -1,7 +1,13 @@
 interface Creep{
     _bif:{[part:string]:number}
     bodyInfo():{[part:string]:number}
+    buff():CreepBuffer
 
+    onTheEdge():boolean
+
+}
+interface CreepBuffer{
+    _bif:{[p:string]:number};
 }
 
 interface CreepMemory{

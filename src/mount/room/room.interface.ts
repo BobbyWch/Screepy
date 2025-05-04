@@ -1,15 +1,8 @@
 interface Room{
-	nuker:StructureNuker;
-	factory:StructureFactory;
-	powerSpawn:StructurePowerSpawn;
-	centerLink:StructureLink;
-	upLink:StructureLink;
-	NTower:StructureTower;
-	centerPos:RoomPosition;
-	observer:StructureObserver;
 	HostileGroup: Id<Creep>[];
 
 	_scs:Source[]
+	_cp:RoomPosition
 
 
 	callAfterBuilt():Structure;
@@ -83,7 +76,6 @@ interface RoomMemory{
 	mission:MissionModel[];
 	deletedMsn:{id:string,startTime:number,type:string}[];
 	wantUpg:boolean;
-	ids:IdCache;
 	bluePrint:string;
 	centerP:string;
 	harvestData:HarvestData;
@@ -128,17 +120,7 @@ interface RepairInfo{
 	hitsExp:number;
 	endTime:number;
 }
-interface IdCache{
-	ps:Id<StructurePowerSpawn>;
-	nu:Id<StructureNuker>;
-	fa:Id<StructureFactory>;
-	cl:Id<StructureLink>;
-	ul:Id<StructureLink>;
-	nt:Id<StructureTower>;
-	ob:Id<StructureObserver>;
-	pc:string;
-	ss:Id<Source>[]
-}
+
 interface UpgradeInfo{
 	level:number;
 	con?:Id<StructureContainer>;

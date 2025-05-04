@@ -2,10 +2,17 @@ import {Runtime} from "@/framework/runtime";
 import {Colony} from "@/obj/Colony/colony";
 import {XFrame} from "@/framework/frame";
 import {uu} from "@/modules/util";
-import {Unit} from "@/obj/Unit/unit";
+import {TaskUnit, Unit} from "@/obj/Unit/unit";
 
 XFrame.addMount(()=>{
 	let key:string,room:Room
+	if (Memory.units){
+		for (key in Memory.units){
+			if (Memory.units[key]["taskData"]) Runtime.addUnit(new TaskUnit(key,undefined))
+			else Runtime.addUnit(new Unit(key,undefined))
+		}
+	}
+
 	if (uu.firstKey(Memory.colony)){
 		let name,c
 		for (name in Memory.colony){
@@ -23,8 +30,6 @@ XFrame.addMount(()=>{
 		}
 	}
 
-	for (key in Memory.units){
-		Runtime.addUnit(new Unit(key,undefined))
-	}
+
 
 })

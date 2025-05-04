@@ -31,5 +31,15 @@ export const uu={
 				}
 			}
 		}
+	},
+
+	zipPos: (pos:RoomPosition|{x:number,y:number},ignoreName?:boolean):string => {
+		if (ignoreName) return `${pos.x}/${pos.y}`
+		else return `${pos.x}/${pos.y}/${(pos as RoomPosition).roomName}`
+	},
+	unzipPos:(posStr:string):RoomPosition|{x:number,y:number} => {
+		const infos = posStr.split('/')
+		if (infos.length==2) return {x:Number(infos[0]),y:Number(infos[1])}
+		else return new RoomPosition(Number(infos[0]),Number(infos[1]),infos[2])
 	}
 }

@@ -12,10 +12,15 @@ export class WorkGroup<memType extends WorkGroupMemory> implements RuntimeObject
 	type:WorkGroupType
 
 	protected constructor(colony:Colony, type:WorkGroupType) {
-		this.colony=colony
-		this.type=type
+		this.colony = colony
+		this.type = type
+		this.units = {}
 		if (!this.memory) {
-			this.colony.memory.workGroup[this.type]={} as WorkGroupMemory
+			this.colony.memory.workGroup[this.type] = {units: {}} as WorkGroupMemory
+		}
+		let key
+		for (key in this.memory.units) {
+			this.units[key] = this.memory.units[key].map(un => Unit.units[un])
 		}
 	}
 	run(){
@@ -42,6 +47,10 @@ export class WorkGroup<memType extends WorkGroupMemory> implements RuntimeObject
 		if (!this.memory.units[role]) this.memory.units[role]=[]
 		this.memory.units[role].push(unit._name)
 	}
+	roleNum(role:string):number{
+		if (!this.units[role]) return 0
+		return this.units[role].length
+	}
 
 }
 XFrame.addMount(()=>{
@@ -60,20 +69,16 @@ XFrame.addMount(()=>{
 	class HarvestGroup extends WorkGroup<HarvestGMemory> {
 		constructor(colony: Colony) {
 			super(colony, WorkGroupType.HARVEST);
-			if (!this.memory) {
-
-				this.colony.memory.workGroup[WorkGroupType.HARVEST]={
-					num:this.colony.room.sources().length,
-					units:{}
-					// id:sou
-				} as HarvestGMemory
+			if (!this.memory.num){
+				this.memory.num=this.colony.sources().length
 			}
 		}
 		run() {
-			if (this.units[Roles.harvester].length<1){
+			if (this.roleNum(Roles.harvester)<this.memory.num){
 				let unit=this.colony.hatchery.createUnit(Roles.harvester)
 
-				unit.addTask(Tasks.harvest( unit,this.colony.room.sources()[0].id))
+				unit.addTask(Tasks.harvest(unit,this.colony.sources()[0].id))
+				this.addUnit(unit,Roles.harvester)
 				// this.units[Roles.harvester].push(this.colony.hatchery.spawn({_role:Roles.harvester}))
 			}
 		}
@@ -81,4 +86,4 @@ XFrame.addMount(()=>{
 	// WorkGroup.wgClasses[WorkGroupType.UPGRADE]=UpgradeGroup
 	WorkGroup.wgClasses[WorkGroupType.HARVEST]=HarvestGroup
 
-})
+},true)

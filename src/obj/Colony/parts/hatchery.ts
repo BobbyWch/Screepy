@@ -39,33 +39,34 @@ export class Hatchery{
 				while (freeSpawn.length&&tasks.length) {
 					newCreep = tasks[0];
 					if (newCreep.mem.role && (newCreep.mem.role in roleBody)) {
-						body=newCreep.body||this.getRoleBody(newCreep.mem.role)
-						cost=Hatchery.getCost(body)
-						if (newCreep.isZippedBody) body=Hatchery.unzipBody(body)
-
-
+						if (!newCreep.body){
+							newCreep.body=this.getRoleBody(newCreep.mem.role)
+							newCreep.isZippedBody=true
+						}
+						cost=Hatchery.getCost(newCreep.body)
 						if (this.colony.room.energyAvailable >= cost) {
+							body=newCreep.isZippedBody?Hatchery.unzipBody(newCreep.body as ZippedBodyInfo):newCreep.body
 							if (this.memory.autoBoost[newCreep.mem.role]){
 								newCreep.mem.needBoost=_.clone(this.memory.autoBoost[newCreep.mem.role])
 							}
 							newCreep.mem.belong=this.colony._name
 							if(freeSpawn[0].spawnCreep(body, newCreep.name, {memory: newCreep.mem})==OK){
-								uu.arrayRemove(newCreep,tasks)
+								tasks.shift()
 								this.colony.room.energyAvailable-=cost
 								freeSpawn.shift()
 							}
-						}
+						}else break
 					} else {
 						cost=Hatchery.getCost(newCreep.body)
-						if (newCreep.isZippedBody) newCreep.body=Hatchery.unzipBody(newCreep.body as ZippedBodyInfo)
 						if (this.colony.room.energyAvailable >= cost) {
+							body=newCreep.isZippedBody?Hatchery.unzipBody(newCreep.body as ZippedBodyInfo):newCreep.body
 							newCreep.mem.belong=this.colony._name
-							if(freeSpawn[0].spawnCreep(newCreep.body as BodyPartConstant[], newCreep.name, {memory: newCreep.mem})==OK){
-								uu.arrayRemove(newCreep,tasks)
+							if(freeSpawn[0].spawnCreep(body as BodyPartConstant[], newCreep.name, {memory: newCreep.mem})==OK){
+								tasks.shift()
 								this.colony.room.energyAvailable-=cost
 								freeSpawn.shift()
 							}
-						}
+						} else break
 					}
 				}
 
@@ -115,8 +116,8 @@ export class Hatchery{
 			name:unit._name,
 			priority:5,
 			mem:{},
-			body:unit.memory.body.data,
-			isZippedBody:true
+			body:bodygen.data,
+			isZippedBody:bodygen.type==BodyGenType.ZIP
 		} as SpawnTask
 
 		const t=this.memory.task
@@ -126,6 +127,7 @@ export class Hatchery{
 			}
 		}
 		t.push(spawnTask)
+		unit.memory.spawning=true
 	}
 
 	getRoleBody(role:string):ZippedBodyInfo{
@@ -141,7 +143,7 @@ export class Hatchery{
 				}
 			}
 		}else if (role==Roles.harvester){
-			if (room.memory.prop.regen) return roleBody[Roles.harvester][0]
+			// if (room.memory.prop.regen) return roleBody[Roles.harvester][0]
 		}else if (role==Roles.miner&&room.controller.level>6){
 			if (room.storage.store[room.memory.mineral]<60000) return roleBody[Roles.miner][0]
 		}else if (role==Roles.carrier&&room.memory.prop.opSpawn){

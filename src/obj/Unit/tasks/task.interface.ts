@@ -6,5 +6,6 @@ interface HarvestTaskMem extends TaskMemory{
 }
 
 interface GotoTaskMem extends TaskMemory{
-
+	range:number
+	zipPos:string
 }

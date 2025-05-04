@@ -1,9 +1,9 @@
 interface Memory{
 
-    avoids:string[];
+    avoids:{};
 
     whiteList:string[];
 
     version:string;
-
+    a:boolean//pause flag
 }

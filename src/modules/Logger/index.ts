@@ -1,10 +1,10 @@
-export const Logger:LoggerProto={
+export const Logger={
 	err(e: string, notify?: boolean): void {
 		console.log(this.$colorful(e,Colors.red))
 		if (notify) Game.notify(e,30)
 	},
-	log(s: string): void {
-		console.log(s)
+	log(s: string,color?:string): void {
+		console.log(color?this.$colorful(s,color):s)
 	},
 	$colorful(s: string, color: string): string {
 		return `<text style="color: ${color}; ">${s}</text>`;
