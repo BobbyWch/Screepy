@@ -16,20 +16,16 @@ XFrame.addMount(()=>{
 	if (uu.firstKey(Memory.colony)){
 		let name,c
 		for (name in Memory.colony){
-			c=new Colony(name)
-			if (c.room) Runtime.addColony(c)
+			Runtime.addColony(new Colony(name))
 		}
 	}else {
 		for (key in Game.rooms){
 			room=Game.rooms[key]
 			if (room.controller&&room.controller.my){
-				const c=Colony.get(room)
+				const c=new Colony(room)
 				c.setState(ColonyState.BOOT0)
 				Runtime.addColony(c)
 			}
 		}
 	}
-
-
-
 })

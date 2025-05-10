@@ -8,6 +8,10 @@ interface ColonyMemory{
 	workGroup: { [t:number]:WorkGroupMemory }
 	ids:IdCache
 	centerP:string
+	MSite:{[id:string]:MineSiteMemory}
+}
+interface MineSiteMemory{
+	id:Id<Source>
 }
 interface IdCache{
 	ps?:Id<StructurePowerSpawn>;

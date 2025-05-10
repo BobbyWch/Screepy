@@ -3,3 +3,4 @@ node_modules/
 dist/
 .secret.json
 src.zip
+old/

@@ -2,11 +2,13 @@ import {WorkGroup} from "@/obj/WorkGroup/workgroup";
 import {Hatchery} from "@/obj/Colony/parts/hatchery";
 import {TowerAI} from "@/obj/Colony/parts/tower";
 import {OLD_MEMORY, XFrame} from "@/framework/frame";
+import {MineSite} from "@/obj/Colony/parts/MineSite";
 
-export class Colony implements RuntimeObject{
+export class Colony implements RuntimeObject,CanEqual{
 	room:Room
 	hatchery:Hatchery
 	towerAI:TowerAI
+	mineSites:MineSite[]
 
 	nuker:StructureNuker;
 	factory:StructureFactory;
@@ -23,12 +25,19 @@ export class Colony implements RuntimeObject{
 	workGroups:WorkGroup<any>[]
 
 	run(): void {
+		if (!this.room) return//存在一种极端情况，占有房间但无视野，未测试
+		this.debugHotFix()
+
 		this.stateWork()
 
 		let o
 		for (o of this.workGroups) if(o)o.run()
 		this.hatchery.run()
 		
+	}
+	//调试时修补内存
+	debugHotFix(){
+		if (!this.memory.MSite) this.memory.MSite={}
 	}
 	stateWork():void{
 		switch (this.memory.state){
@@ -51,8 +60,8 @@ export class Colony implements RuntimeObject{
 		else return (this._mm=Memory.colony[this._name])
 	}
 	private static colonies:{[rn:string]:Colony}={}
-	static get(room:Room):Colony{
-		return this.colonies[room.name]||(new Colony(room))
+	static get(roomName:string):Colony{
+		return this.colonies[roomName]||(throw new Error("should not be null"))
 	}
 
 	public constructor(room:Room|string) {
@@ -64,12 +73,11 @@ export class Colony implements RuntimeObject{
 		if(!Memory.colony[room.name]) Memory.colony[room.name]={
 			workGroup:{},
 			state:ColonyState.BOOT,
-			ids:{}
+			ids:{},
+			MSite:{}
 		} as ColonyMemory
 
-		//hardcode
-		if(this.memory.workGroup["length"]) this.memory.workGroup={}
-
+		this.mineSites=this.sources().map(s=>new MineSite(this,s.id))
 		this.hatchery=new Hatchery(this)
 		this.towerAI=new TowerAI(this)
 		let key
@@ -79,7 +87,13 @@ export class Colony implements RuntimeObject{
 
 		Colony.colonies[room.name]=this
 	}
+
+	equal(obj: any): boolean {
+		return this._name==obj["_name"];
+	}
+
 	_name: string;//房间名
+
 
 
 	/**

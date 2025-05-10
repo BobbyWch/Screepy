@@ -1,9 +1,15 @@
 export const uu={
 	cNum:0,
 	cP:["a","s","d","f"][Game.shard.name[5]]||"c",
+	/**
+	 * 注意对象之间只比较地址，不考虑多实例
+	 */
 	arrayRemove(obj:any,arr:Array<any>):void{
 		let i=arr.indexOf(obj)
 		if (i!=-1) arr.splice(i,1)
+	},
+	objArrRemove(obj:CanEqual,arr:Array<CanEqual>):void{
+
 	},
 	firstKey(o:object):string|undefined{
 		// noinspection LoopStatementThatDoesntLoopJS,UnnecessaryLocalVariableJS

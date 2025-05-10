@@ -27,5 +27,9 @@ const enum CC{
 
 	taskOK=0,
 	taskFinish=1,
-	taskNext=2,
+	taskHang=2,//挂起，重新执行队列中的第一个task
+}
+
+interface CanEqual{
+	equal(obj:any):boolean
 }

@@ -1,5 +1,6 @@
 import {Logger} from "@/modules/Logger";
 import {uu} from "@/modules/util";
+import {Unit} from "@/obj/Unit/unit";
 
 export let OLD_MEMORY=false
 
@@ -95,5 +96,15 @@ export const XFrame= {
 	},
 	cleanHeap() {
 		global.Heap.enemyC = {}
+	},
+	cleanMem(){
+		const creeps=Game.creeps,memCreeps=Memory.creeps
+		let n
+		for (n in memCreeps){
+			if (!creeps[n]){
+				delete memCreeps[n]
+				Unit.get(n).finalize()
+			}
+		}
 	}
 }

@@ -5,6 +5,7 @@ import "@/mount/index"
 import {Runtime} from "@/framework/runtime";
 import "@/lib/betterMove";
 import {Colors, Logger} from "@/modules/Logger";
+import {Visual} from "@/modules/visual/visual";
 
 global.Heap={
 	creep:{},
@@ -17,6 +18,9 @@ export let loop = XFrame.wrapError(()=> {
 	XFrame.load()
 	Runtime.update()
 	Runtime.run()
+
+	Visual.run()
+	if (global.Gtime%11==0) XFrame.cleanMem()
 	if (global.Gtime%7003==0) XFrame.cleanHeap()
 
 	if (Game.cpu.bucket == 10000&&Game.cpu.generatePixel) Game.cpu.generatePixel()
