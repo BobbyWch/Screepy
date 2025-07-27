@@ -1,6 +1,9 @@
 const enum ColonyState{
 	BOOT0,BOOT,NORMAL,DEFENDING,OUTPOST
 }
+const enum MineSiteState{
+	drop=1,container=2,link=3,multi
+}
 interface ColonyMemory{
 	state:ColonyState
 	hatch?:HatcheryMemory
@@ -9,9 +12,15 @@ interface ColonyMemory{
 	ids:IdCache
 	centerP:string
 	MSite:{[id:string]:MineSiteMemory}
+	base:ColBaseMemory
 }
 interface MineSiteMemory{
 	id:Id<Source>
+	link?:Id<StructureLink>
+	con?:Id<StructureContainer>
+	state:MineSiteState
+	used:number
+	workNum:number
 }
 interface IdCache{
 	ps?:Id<StructurePowerSpawn>;

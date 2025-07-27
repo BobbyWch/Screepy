@@ -1,6 +1,6 @@
 import {Unit} from "@/obj/Unit/unit";
 import {Colony} from "@/obj/Colony/colony";
-import {OLD_MEMORY, XFrame} from "@/framework/frame";
+import {OLD_MEMORY} from "@/framework/frame";
 import {Roles} from "@/obj/Colony/parts/hatchery";
 import {uu} from "@/modules/util";
 import {Tasks} from "@/obj/Unit/tasks/task";
@@ -58,38 +58,85 @@ export class WorkGroup<memType extends WorkGroupMemory> implements RuntimeObject
 	}
 
 }
-XFrame.addMount(()=>{
-	// class NumedGroup extends WorkGroup{
-	// 	num:number
-	//
-	// }
-
-	// class UpgradeGroup extends WorkGroup{
-	// 	constructor(colony:Colony) {
-	// 		super(colony,WorkGroupType.UPGRADE);
-	// 	}
-	//
-	//
-	// }
-	class HarvestGroup extends WorkGroup<HarvestGMemory> {
-		constructor(colony: Colony) {
-			super(colony, WorkGroupType.HARVEST);
-			if (!this.memory.num){
-				this.memory.num=this.colony.sources().length
-			}
+class HarvestGroup extends WorkGroup<HarvestGMemory> {
+	constructor(colony: Colony) {
+		super(colony, WorkGroupType.HARVEST);
+		if (!this.memory.num) this.memory.num=this.workerNum()
+	}
+	workerNum(){
+		const sources=this.colony.sources()
+		let src:Source,num=0
+		for (src of sources){
+			num+=Math.min(3,src.pos.freeSpace())
 		}
-		run() {
-			if (this.roleNum(Roles.harvester)<this.memory.num){
-				let unit=this.colony.hatchery.createUnit(Roles.harvester)
+		return num
+	}
+	run() {
+		if (this.colony.memory.state==ColonyState.BOOT){
+			this.memory.num=this.workerNum()//TODO del
+		}
+		if (this.roleNum(Roles.harvester)<this.memory.num){
+			let unit=this.colony.hatchery.createRole(Roles.harvester)
+			const site=_.min(this.colony.mineSites,s=>s.memory.workNum)
+			site.regWork(unit)
+			unit.addTask(Tasks.harvest(unit,site))
+			unit.setRole(Roles.harvester)
+			this.addUnit(unit)
+			// this.units[Roles.harvester].push(this.colony.hatchery.spawn({_role:Roles.harvester}))
+		}
 
-				unit.addTask(Tasks.harvest(unit,this.colony.sources()[0].id))
-				unit.setRole(Roles.harvester)
-				this.addUnit(unit)
-				// this.units[Roles.harvester].push(this.colony.hatchery.spawn({_role:Roles.harvester}))
-			}
+	}
+}
+class HatchFillGroup extends WorkGroup<FillGMem> {
+	constructor(colony: Colony) {
+		super(colony, WorkGroupType.FILL);
+		if (!this.memory.num){
+			this.memory.num=2
 		}
 	}
-	// WorkGroup.wgClasses[WorkGroupType.UPGRADE]=UpgradeGroup
-	WorkGroup.wgClasses[WorkGroupType.HARVEST]=HarvestGroup
+	run() {
+		if (this.roleNum(Roles.spawner)<this.memory.num){
+			let unit
+			if (this.colony.memory.state==ColonyState.BOOT0) unit=this.colony.hatchery.createBody([CARRY,MOVE])
+			else unit=this.colony.hatchery.createRole(Roles.spawner)
 
-},true)
+			unit.addTask(Tasks.hatchFill(unit))
+			unit.setRole(Roles.spawner)
+			this.addUnit(unit)
+			// this.units[Roles.harvester].push(this.colony.hatchery.spawn({_role:Roles.harvester}))
+		}
+	}
+}
+class UpgradeGroup extends WorkGroup<FillGMem> {
+	constructor(colony: Colony) {
+		super(colony, WorkGroupType.UPGRADE);
+		if (!this.memory.num){
+			this.memory.num=3
+		}
+	}
+	run() {
+		if (this.roleNum(Roles.upgrader)<this.memory.num){
+			let unit=this.colony.hatchery.createRole(Roles.upgrader)
+
+			unit.addTask(Tasks.upgrade(unit))
+			unit.setRole(Roles.upgrader)
+			this.addUnit(unit)
+			// this.units[Roles.harvester].push(this.colony.hatchery.spawn({_role:Roles.harvester}))
+		}
+		if (global.Gtime%13==0){
+			if (_.sum(this.colony.mineSites,s=>s.energyLeft())>1000&&this.memory.num<13) this.memory.num++
+		}
+	}
+}
+class BuildGroup extends WorkGroup<any>{
+	constructor(colony: Colony) {
+		super(colony, WorkGroupType.BUILD);
+		if (!this.memory.num){
+			this.memory.num=3
+		}
+	}
+}
+// WorkGroup.wgClasses[WorkGroupType.UPGRADE]=UpgradeGroup
+WorkGroup.wgClasses[WorkGroupType.HARVEST]=HarvestGroup
+WorkGroup.wgClasses[WorkGroupType.FILL]=HatchFillGroup
+WorkGroup.wgClasses[WorkGroupType.UPGRADE]=UpgradeGroup

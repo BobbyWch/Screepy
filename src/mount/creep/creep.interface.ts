@@ -1,9 +1,16 @@
 interface Creep{
     _bif:{[part:string]:number}
+    storeLock:boolean//有store相关操作且OK
+    deltaRes?:{[res:string]:number}
     bodyInfo():{[part:string]:number}
     buff():CreepBuffer
 
     onTheEdge():boolean
+    moveTimeTo(pos:RoomPosition,range?:number):number
+
+    r_tr(target: AnyCreep | Structure, resourceType: ResourceConstant, amount?: number): ScreepsReturnCode;
+    r_wi(target: Structure | Tombstone | Ruin, resourceType: ResourceConstant, amount?: number): ScreepsReturnCode;
+    r_pi(target: Resource): CreepActionReturnCode | ERR_FULL;
 
 }
 interface CreepBuffer{

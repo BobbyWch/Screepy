@@ -3,12 +3,16 @@ import {Hatchery} from "@/obj/Colony/parts/hatchery";
 import {TowerAI} from "@/obj/Colony/parts/tower";
 import {OLD_MEMORY, XFrame} from "@/framework/frame";
 import {MineSite} from "@/obj/Colony/parts/MineSite";
+import {storeProxyH} from "@/modules/util";
+import {ColonyBase} from "@/obj/Colony/parts/colony_base";
+import {Colors} from "@/modules/Logger";
 
 export class Colony implements RuntimeObject,CanEqual{
 	room:Room
 	hatchery:Hatchery
 	towerAI:TowerAI
 	mineSites:MineSite[]
+	base: ColonyBase
 
 	nuker:StructureNuker;
 	factory:StructureFactory;
@@ -18,50 +22,72 @@ export class Colony implements RuntimeObject,CanEqual{
 	NTower:StructureTower;
 	observer:StructureObserver;
 
+	extFilled:boolean//是否全部填满
+
 	update():void{
 		this.room=Game.rooms[this._name]
+		this.extFilled=this.room.energyAvailable==this.room.energyCapacityAvailable
 	}
 
-	workGroups:WorkGroup<any>[]
+	workGroups:WorkGroup<any>[]//无序！
 
 	run(): void {
 		if (!this.room) return//存在一种极端情况，占有房间但无视野，未测试
-		this.debugHotFix()
 
 		this.stateWork()
 
 		let o
 		for (o of this.workGroups) if(o)o.run()
 		this.hatchery.run()
-		
+		if (this.memory.state==ColonyState.BOOT0) this.memory.state=ColonyState.BOOT
+
+		this.debugVisual()
 	}
 	//调试时修补内存
 	debugHotFix(){
-		if (!this.memory.MSite) this.memory.MSite={}
+
+	}
+	debugVisual(){
+		if (this.extId&&this.extId.length){
+			const v=this.room.visual
+			let id,pos
+			for (id of this.extId){
+				pos=Game.structures[id].pos
+				v.circle(pos,{stroke:Colors.red})
+			}
+		}
 	}
 	stateWork():void{
 		switch (this.memory.state){
 			case ColonyState.BOOT0:
+				this.base.runPlan()
 				//刚respawn
 				this.addWorkGroup(WorkGroupType.HARVEST)
-				this.memory.state=ColonyState.BOOT
+				this.addWorkGroup(WorkGroupType.FILL)
 				break
+			case ColonyState.BOOT:
+				if (!this.getWorkGroup(WorkGroupType.UPGRADE)&&this.hatchery.memory.task.length==0)
+					this.addWorkGroup(WorkGroupType.UPGRADE)
 		}
 	}
 	setState(state:ColonyState):void{
 		this.memory.state=state
 	}
+
 	addWorkGroup(type:WorkGroupType){
-		this.workGroups[type]=WorkGroup.createByType(this,type)
+		this.workGroups.push(WorkGroup.createByType(this,type))
+	}
+	getWorkGroup(type:WorkGroupType){
+		return this.workGroups.find(w=>w.type==type)
 	}
 	_mm:ColonyMemory
 	get memory():ColonyMemory{
 		if (OLD_MEMORY&&this._mm) return this._mm
 		else return (this._mm=Memory.colony[this._name])
 	}
-	private static colonies:{[rn:string]:Colony}={}
+	static colonies:{[rn:string]:Colony}={}
 	static get(roomName:string):Colony{
-		return this.colonies[roomName]||(throw new Error("should not be null"))
+		return this.colonies[roomName]
 	}
 
 	public constructor(room:Room|string) {
@@ -76,13 +102,15 @@ export class Colony implements RuntimeObject,CanEqual{
 			ids:{},
 			MSite:{}
 		} as ColonyMemory
+		this.debugHotFix()
 
 		this.mineSites=this.sources().map(s=>new MineSite(this,s.id))
+		this.base=new ColonyBase(this)
 		this.hatchery=new Hatchery(this)
 		this.towerAI=new TowerAI(this)
 		let key
 		for (key in this.memory.workGroup){
-			this.workGroups[key]=WorkGroup.createByType(this,key)
+			this.workGroups.push(WorkGroup.createByType(this,key))
 		}
 
 		Colony.colonies[room.name]=this
@@ -117,6 +145,39 @@ export class Colony implements RuntimeObject,CanEqual{
 		}
 		return this.room._cp
 	}
+
+	/**
+	 * 统计storage,terminal,factory资源
+	 */
+	get store():{[res:string]:number} {
+		if (!this.room._ast) {
+			const store = {}, list = []
+			if (this.room.storage) list.push(this.room.storage.store)
+			if (this.room.terminal) list.push(this.room.terminal.store)
+			if (this.factory) list.push(this.factory.store)
+			let child, res
+			for (child of list) {
+				for (res in child) {
+					store[res] = child[res] + (store[res]||0)
+				}
+			}
+			this.room._ast = new Proxy(store,storeProxyH)
+		}
+		return this.room._ast
+	}
+	private extId:Id<HatchEgg>[]
+	extToFillId(){
+		if (!this.extId||this.extId.length==0){
+			if (this.room.controller.level==8){
+				this.extId=this.room.find(FIND_MY_STRUCTURES).filter(s=> (s.structureType=="spawn"||s.structureType=="extension")
+					&&s.store.getFreeCapacity(RESOURCE_ENERGY)).map(s=>s.id) as Id<HatchEgg>[]
+			}else {
+				this.extId=this.room.find(FIND_MY_STRUCTURES).filter(s=> (s.structureType=="spawn"||s.structureType=="extension")
+					&&s.store.getFreeCapacity(RESOURCE_ENERGY)&&s.isActive()).map(s=>s.id) as Id<HatchEgg>[]
+			}
+		}
+		return this.extId
+	}
 }
 XFrame.addMount(()=>{
 	const empty = () => {}
@@ -147,3 +208,5 @@ XFrame.addMount(()=>{
 	defStructure("observer","ob")
 
 },true)
+//@ts-ignore
+global.col=Colony.colonies

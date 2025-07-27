@@ -37,6 +37,21 @@ export const Runtime={
 		for (i=0;i<len;i++){
 			upds[i].update()
 		}
+	},
+	cleanHeap() {
+		global.Heap.enemyC = {}
+		global.Heap.room={}//TODO 考虑定期随机清除
+	},
+	cleanMem(){
+		const creeps=Game.creeps,memCreeps=Memory.creeps
+		let n
+		for (n in memCreeps){
+			if (!creeps[n]){
+
+				Unit.get(n).finalize()
+				delete memCreeps[n]
+			}
+		}
 	}
 
 }

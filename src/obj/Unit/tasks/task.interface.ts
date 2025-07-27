@@ -1,8 +1,9 @@
 interface HarvestTaskMem extends TaskMemory{
-	src:Id<Source>
+	// src:Id<Source>
 	state:CC.harvestStateLink|CC.harvestStateSite|CC.harvestStateContainer|CC.harvestStateDrop
 	store:Id<StructureLink|StructureContainer|ConstructionSite>
 	mineNum:number
+	siteId:string
 }
 
 interface GotoTaskMem extends TaskMemory{
@@ -19,4 +20,13 @@ const enum FetchWayType{
 }
 interface CollectTaskMem extends TaskMemory{
 	srcId:Id<Source>
+}
+interface UpgTaskMem extends TaskMemory{
+
+}
+interface BuildTaskMem extends TaskMemory{
+
+}
+interface RepairTaskMem extends TaskMemory{
+
 }

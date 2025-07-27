@@ -1,6 +1,5 @@
 import {Logger} from "@/modules/Logger";
 import {uu} from "@/modules/util";
-import {Unit} from "@/obj/Unit/unit";
 
 export let OLD_MEMORY=false
 
@@ -22,8 +21,15 @@ export const XFrame= {
 		else {
 			this.memoryInit()
 			let fn
-			for (fn of this.mounts.first) fn()
-			for (fn of this.mounts.normal) fn()
+			try{
+				for (fn of this.mounts.first) fn()
+				for (fn of this.mounts.normal) fn()
+			}catch (e){
+				console.log(_.escape(e.stack))
+				throw new Error("Mount failed!")
+
+			}
+
 			delete this.mounts
 			this.mtd = true
 		}
@@ -93,18 +99,6 @@ export const XFrame= {
 		if (!Memory.avoids) Memory.avoids=[]
 		if (!Memory.colony) Memory.colony = {}
 		if (!Memory.units) Memory.units = {}
-	},
-	cleanHeap() {
-		global.Heap.enemyC = {}
-	},
-	cleanMem(){
-		const creeps=Game.creeps,memCreeps=Memory.creeps
-		let n
-		for (n in memCreeps){
-			if (!creeps[n]){
-				delete memCreeps[n]
-				Unit.get(n).finalize()
-			}
-		}
+		if (!Memory.whiteList) Memory.whiteList=[]
 	}
 }

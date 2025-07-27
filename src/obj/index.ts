@@ -6,12 +6,6 @@ import {TaskUnit, Unit} from "@/obj/Unit/unit";
 
 XFrame.addMount(()=>{
 	let key:string,room:Room
-	if (Memory.units){
-		for (key in Memory.units){
-			if (Memory.units[key]["taskData"]) Runtime.addUnit(new TaskUnit(key,undefined))
-			else Runtime.addUnit(new Unit(key,undefined))
-		}
-	}
 
 	if (uu.firstKey(Memory.colony)){
 		let name,c
@@ -19,6 +13,10 @@ XFrame.addMount(()=>{
 			Runtime.addColony(new Colony(name))
 		}
 	}else {
+		if (Game.cpu.bucket<200){
+			console.log("Bucket is too low for booting --- skip tick:"+Game.time)
+			return
+		}
 		for (key in Game.rooms){
 			room=Game.rooms[key]
 			if (room.controller&&room.controller.my){
@@ -26,6 +24,12 @@ XFrame.addMount(()=>{
 				c.setState(ColonyState.BOOT0)
 				Runtime.addColony(c)
 			}
+		}
+	}
+	if (Memory.units){
+		for (key in Memory.units){
+			if (Memory.units[key]["taskData"]) Runtime.addUnit(new TaskUnit(key,undefined))
+			else Runtime.addUnit(new Unit(key,undefined))
 		}
 	}
 })

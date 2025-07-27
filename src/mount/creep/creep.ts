@@ -23,6 +23,50 @@ XFrame.addMount(()=>{
     Creep.prototype.onTheEdge = function () {
         return this.pos.x == 49 || this.pos.x == 0 || this.pos.y == 49 || this.pos.y == 0;
     }
+    Creep.prototype.moveTimeTo=function (pos,range=1){
+        PathFinder.search(this.pos,{pos,range},{
+
+        })
+        return -1
+    }
+    Creep.prototype.r_tr=Creep.prototype.transfer
+    Creep.prototype.transfer=function (target: AnyCreep | Structure, resourceType: ResourceConstant, amount?: number){
+        if (this.storeLock) return ERR_TIRED
+        const result= this.r_tr(target, resourceType, amount)
+        if (result==OK){
+            this.storeLock=true
+            if (!this.deltaRes) this.deltaRes={}
+            if (!this.deltaRes[resourceType]) this.deltaRes[resourceType]=0
+            if (!amount) amount=this.store[resourceType]
+            this.deltaRes[resourceType]=-Math.min(amount,(target as Creep).store.getFreeCapacity(resourceType))
+            return OK
+        }else return result
+    }
+    Creep.prototype.r_wi=Creep.prototype.withdraw
+    Creep.prototype.withdraw=function (target: Structure | Tombstone | Ruin, resourceType: ResourceConstant, amount?: number){
+        if (this.storeLock) return ERR_TIRED
+        const result= this.r_wi(target, resourceType, amount)
+        if (result==OK){
+            this.storeLock=true
+            if (!this.deltaRes) this.deltaRes={}
+            if (!this.deltaRes[resourceType]) this.deltaRes[resourceType]=0
+            if (!amount) amount=this.store.getFreeCapacity()
+            this.deltaRes[resourceType]=Math.min(amount,(target as Tombstone).store[resourceType])
+            return OK
+        }else return result
+    }
+    Creep.prototype.r_pi=Creep.prototype.pickup
+    Creep.prototype.pickup=function (target: Resource){
+        if (this.storeLock) return ERR_TIRED
+        const result=this.r_pi(target)
+        if (result==OK){
+            this.storeLock=true
+            if (!this.deltaRes) this.deltaRes={}
+            if (!this.deltaRes[target.resourceType]) this.deltaRes[target.resourceType]=0
+            this.deltaRes[target.resourceType]=Math.min(target.amount,this.store.getFreeCapacity())
+            return OK
+        }else return result
+    }
 
 })
 export function mountCreep() {

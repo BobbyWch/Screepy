@@ -77,13 +77,22 @@ export class Hatchery{
 
 		}
 	}
-	createUnit(bodyRole:string,noSpawn?:boolean):TaskUnit{
+	createRole(bodyRole:string):TaskUnit{
 		const unit=new TaskUnit(uu.getCreepName(),this.colony._name)
 		unit.memory.body={
 			data:this.getRoleBody(bodyRole),
 			type:BodyGenType.ZIP
 		}
-		if (!noSpawn) this.spawnUnit(unit)
+		this.spawnUnit(unit)
+		return unit
+	}
+	createBody(body:BodyPartConstant[]):TaskUnit{
+		const unit=new TaskUnit(uu.getCreepName(),this.colony._name)
+		unit.memory.body={
+			data:body,
+			type:BodyGenType.RAW
+		}
+		this.spawnUnit(unit)
 		return unit
 	}
 	spawn(info:SpawnInfo):void{
@@ -239,7 +248,7 @@ export const Roles={
 const standUpgrader:ZippedBodyInfo[]=[[[WORK,15],[MOVE,8],[CARRY,3]],[[WORK,8],[MOVE,2],[CARRY,2]],[[WORK,12],[MOVE,3],[CARRY,2]],[[WORK,16],[MOVE,4],[CARRY,2]],[[WORK,28],[MOVE,14],[CARRY,4]]];
 
 const roleBody:{[role:string]:ZippedBodyInfo[]}={}
-roleBody[Roles.spawner] = [[[CARRY,4],[MOVE,2]],[[CARRY,6],[MOVE,3]],[[CARRY,8],[MOVE,4]],[[CARRY,12],[MOVE,6]],[[CARRY,14],[MOVE,7]],[[CARRY,20],[MOVE,10]]]
+roleBody[Roles.spawner] = [[[CARRY,3],[MOVE,3]],[[CARRY,6],[MOVE,3]],[[CARRY,8],[MOVE,4]],[[CARRY,12],[MOVE,6]],[[CARRY,14],[MOVE,7]],[[CARRY,20],[MOVE,10]]]
 roleBody[Roles.downer]=[[[CLAIM,15],[MOVE,15]]]
 roleBody[Roles.carrier] = [[[CARRY,10],[MOVE,5]],[[CARRY,16],[MOVE,8]]]
 roleBody[Roles.harvester] = [[[WORK,16],[MOVE,4],[CARRY,4]],[[WORK,2],[MOVE,1],[CARRY,1]],[[WORK,3],[MOVE,1],[CARRY,1]],[[WORK,4],[MOVE,2],[CARRY,1]]

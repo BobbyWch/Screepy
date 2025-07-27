@@ -3,7 +3,15 @@ interface Room{
 
 	_scs:Source[]
 	_cp:RoomPosition
+	_ast:{[res:string]:number}
+	_str_c:{[type:string]:Structure[]}
+	_em:Creep[]
+	_emp:AnyCreep[]
 
+
+	buff():RoomBuffer
+	structs(type:StructureConstant):Structure[]
+	findEnemy(pc?:number):AnyCreep[]|Creep[]
 
 	callAfterBuilt():Structure;
 	flushSite():null|ConstructionSite;
@@ -46,6 +54,9 @@ interface Room{
 
 	sources():Source[]
 }
+interface RoomBuffer{
+
+}
 interface RoomProperty{
 	slowPower:number;
 	factory:number;
@@ -76,7 +87,6 @@ interface RoomMemory{
 	mission:MissionModel[];
 	deletedMsn:{id:string,startTime:number,type:string}[];
 	wantUpg:boolean;
-	bluePrint:string;
 	centerP:string;
 	harvestData:HarvestData;
 	buying:Array<ResourceConstant>;

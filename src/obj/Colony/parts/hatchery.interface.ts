@@ -18,6 +18,14 @@ interface HatcheryMemory{
 	sleepTill:number
 	autoBoost:{[role:string]:MineralBoostConstant[]};
 }
+interface ColBaseMemory{
+	bluePrint:string
+	putSiteCd:number
+	completeLevel:number
+
+	recNum:number
+	recData:{[type:string]:string[]}
+}
 
 type ZippedBodyInfo=[BodyPartConstant,number][]
 const enum BodyGenType{
