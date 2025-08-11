@@ -618,30 +618,31 @@ function checkRoom(room, path: MyPath, startIdx: number) {
  */
 function trySwap(creep: Creep, pos: RoomPosition, bypassHostileCreeps: boolean, ignoreCreeps: boolean) {
 	// ERR_NOT_FOUND开销0.00063，否则开销0.0066
-	const obstacleCreeps = creep.room.lookForAt(LOOK_CREEPS, pos).concat(creep.room.lookForAt(LOOK_POWER_CREEPS, pos) as any);
+	let obstacleCreeps = creep.room.lookForAt(LOOK_CREEPS, pos);
+	if (!obstacleCreeps.length) obstacleCreeps=creep.room.lookForAt(LOOK_POWER_CREEPS, pos) as any
 	if (obstacleCreeps.length) {
 		if (!ignoreCreeps) {
 			return ERR_INVALID_TARGET;
 		}
-		for (const c of obstacleCreeps) {
-			if (c.my) {
-				if (c.memory.dontPullMe && !creep.memory.forcePull) {
-					// 第1种不可穿情况：挡路的creep设置了不对穿
-					return ERR_INVALID_TARGET;
-				}
-				if (
-					creepMoveCache[c.name] != Game.time &&
-					originMove.call(c, getDirection(pos, creep.pos)) == ERR_NO_BODYPART &&
-					creep.pull
-				) {
-					creep.pull(c);
-					originMove.call(c, creep);
-				}
-			} else if (bypassHostileCreeps && (!c.room.controller || !c.room.controller.my || !c.room.controller.safeMode)) {
-				// 第二种不可穿情况：希望绕过敌对creep
+		const c = obstacleCreeps[0]
+		if (c.my) {
+			if (c.memory.dontPullMe && !creep.memory.forcePull) {
+				// 第1种不可穿情况：挡路的creep设置了不对穿
 				return ERR_INVALID_TARGET;
 			}
+			if (
+				creepMoveCache[c.name] != Game.time &&
+				originMove.call(c, getDirection(pos, creep.pos)) == ERR_NO_BODYPART &&
+				creep.pull
+			) {
+				creep.pull(c);
+				originMove.call(c, creep);
+			}
+		} else if (bypassHostileCreeps && (!c.room.controller || !c.room.controller.my || !c.room.controller.safeMode)) {
+			// 第二种不可穿情况：希望绕过敌对creep
+			return ERR_INVALID_TARGET;
 		}
+
 		testTrySwap++;
 		return OK; // 或者全部操作成功
 	}

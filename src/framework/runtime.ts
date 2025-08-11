@@ -19,8 +19,8 @@ export const Runtime={
 		this.shdUpd.push(unit)
 	},
 	removeUnit(unit:Unit):void{
-		uu.arrayRemove(Unit,this.units)
-		uu.arrayRemove(Unit,this.shdUpd)
+		uu.arrayRemove(unit,this.units)
+		uu.arrayRemove(unit,this.shdUpd)
 	},
 	run(){
 		const toRun:Array<RuntimeObject[]>=[this.cls,this.units]

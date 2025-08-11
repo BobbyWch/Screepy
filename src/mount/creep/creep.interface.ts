@@ -12,6 +12,8 @@ interface Creep{
     r_wi(target: Structure | Tombstone | Ruin, resourceType: ResourceConstant, amount?: number): ScreepsReturnCode;
     r_pi(target: Resource): CreepActionReturnCode | ERR_FULL;
 
+    syncRes(res:ResourceConstant):number;
+
 }
 interface CreepBuffer{
     _bif:{[p:string]:number};

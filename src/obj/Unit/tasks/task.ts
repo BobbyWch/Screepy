@@ -2,6 +2,7 @@ import {OLD_MEMORY} from "@/framework/frame";
 import {uu} from "@/modules/util";
 import {TaskUnit} from "@/obj/Unit/unit";
 import {MineSite} from "@/obj/Colony/parts/MineSite";
+import {UpgradeGroup} from "@/obj/WorkGroup/workgroup";
 
 export class Task<memType extends TaskMemory>{
     unit:TaskUnit
@@ -51,12 +52,15 @@ class HarvestTask extends Task<HarvestTaskMem>{
     run() {
         super.run();
         // if (this.unit.notSpawned()) return
-        const source=this.site.source,creep=this.unit.creep
-        if (creep.pos.isNearTo(source)){
+        const creep=this.unit.creep
+        if (creep.pos.isNearTo(this.site.source)){
 
             this.unit.creep.memory.dontPullMe=true
-            if (this.memory.state==CC.harvestStateDrop){
-                creep.harvest(source)
+            // switch (this.memory.state){
+            //
+            // }
+            if (this.memory.state==CC.harvestStateDrop||this.memory.state==CC.harvestStateSite){
+                creep.harvest(this.site.source)
             }
         }else {
             delete this.unit.creep.memory.dontPullMe
@@ -110,9 +114,7 @@ class HatchFillTask extends Task<HatchFillMem>{
     run(){
         super.run()
         const creep=this.unit.creep
-        let eng=creep.store.energy
-        if (creep.storeLock) eng+=creep.deltaRes["energy"]||0
-        if (eng<=0){
+        if (creep.syncRes(RESOURCE_ENERGY)<=0){
             this.unit.insertTask(Tasks.fetch(this.unit,RESOURCE_ENERGY))
             return CC.taskHang
         }
@@ -189,15 +191,20 @@ class CollectTask extends Task<CollectTaskMem>{
             return CC.taskHang
         }else {
             if (this.site.memory.state==MineSiteState.drop){
-                const drops=this.site.source.pos.findInRange(FIND_DROPPED_RESOURCES,2)
+                const drops=this.site.source.pos.findInRange(FIND_DROPPED_RESOURCES,2).filter(r=>r.resourceType=="energy")
                 const nearDrop=this.unit.pos.findClosestByRange(drops)
-                if (this.unit.pos.isNearTo(nearDrop)){
-                    if(this.unit.creep.pickup(nearDrop)==OK){
-                        this.site.unRegGetter(this.unit)
-                        return CC.taskFinish
-                    }
+                if (nearDrop){
+                    if (this.unit.pos.isNearTo(nearDrop)){
+                        if(this.unit.creep.pickup(nearDrop)==OK){
+                            if (this.unit.creep.syncRes(RESOURCE_ENERGY)>0.8*this.unit.creep.store.getCapacity()){
+                                this.site.unRegGetter(this.unit)
+                                return CC.taskFinish
+                            }
+                        }
 
-                }else this.unit.creep.moveTo(nearDrop)
+                    }else this.unit.creep.moveTo(nearDrop)
+                }
+
             }else {
                 const cont=this.site.container
                 if (cont){
@@ -220,25 +227,37 @@ class CollectTask extends Task<CollectTaskMem>{
     }
 }
 class UpgradeTask extends Task<UpgTaskMem>{
+    minEng:number
     constructor(unit:TaskUnit) {
         super(TaskType.UPGRADE,unit);
-
+        this.minEng=2*unit.bodyInfo()[WORK]
     }
     run() {
         super.run()
         const creep=this.unit.creep
         if (!creep.store.energy&&!creep.storeLock){
-            this.unit.insertTask(Tasks.fetch(this.unit,RESOURCE_ENERGY))
-            return CC.taskHang
+            if (this.unit.engBorrow3(creep.room.controller.pos)!=OK){
+                if (this.memory.noCycle){
+                    return CC.taskFinish
+                }else {
+                    this.unit.insertTask(Tasks.fetch(this.unit,RESOURCE_ENERGY))
+                    return CC.taskHang
+                }
+
+            }
         }
 
-        if (this.unit.pos.getRangeTo(this.unit.home().room.controller)<4){
-            this.unit.creep.memory.dontPullMe=true
-            this.unit.creep.upgradeController(this.unit.home().room.controller)
+        if (creep.pos.getRangeTo(creep.room.controller)<4){
+            creep.upgradeController(creep.room.controller)
+            if (creep.store.energy<this.minEng) this.unit.engBorrow3(creep.room.controller.pos)
         }else {
-            delete this.unit.creep.memory.dontPullMe
-            this.unit.insertTask(Tasks.goto(this.unit,this.unit.home().room.controller.pos,3))
-            return CC.taskHang
+            if (creep.pos.getRangeTo(this.unit.home().room.controller)>4){
+                this.unit.insertTask(Tasks.goto(this.unit,creep.room.controller.pos,4))
+                return CC.taskHang
+            }else {
+                this.unit.pushIn3(creep.room.controller.pos)
+            }
+
         }
     }
 
@@ -247,26 +266,39 @@ class UpgradeTask extends Task<UpgTaskMem>{
     }
 }
 class BuildTask extends Task<BuildTaskMem>{
+    minEng:number
     constructor(unit:TaskUnit) {
         super(TaskType.BUILD,unit);
-
+        this.minEng=10*unit.bodyInfo()[WORK]
     }
     run() {
         super.run()
-        let eng=this.unit.creep.store.energy
-        if (this.unit.creep.deltaRes) eng+=this.unit.creep.deltaRes[RESOURCE_ENERGY]||0
-        if (eng<=0){
-            this.unit.insertTask(Tasks.fetch(this.unit,RESOURCE_ENERGY))
-            return CC.taskHang
+        const site=this.unit.home().base.getBuild()
+        if (!site){
+            return CC.taskFinish
+        }
+        const creep=this.unit.creep
+        if (!creep.store.energy&&!creep.storeLock){
+            if (this.unit.engBorrow3(site.pos)!=OK){
+                if (this.memory.noCycle){
+                    return CC.taskFinish
+                }else {
+                    this.unit.insertTask(Tasks.fetch(this.unit,RESOURCE_ENERGY))
+                    return CC.taskHang
+                }
+            }
         }
 
-        if (this.unit.pos.getRangeTo(this.unit.home().room.controller)<4){
-            this.unit.creep.memory.dontPullMe=true
-            this.unit.creep.upgradeController(this.unit.home().room.controller)
+        if (creep.pos.getRangeTo(site)<4){
+            creep.build(site)
+            if (creep.store.energy<this.minEng) this.unit.engBorrow3(site.pos)
         }else {
-            delete this.unit.creep.memory.dontPullMe
-            this.unit.insertTask(Tasks.goto(this.unit,this.unit.home().room.controller.pos,3))
-            return CC.taskHang
+            if (creep.pos.getRangeTo(site)>4){
+                this.unit.insertTask(Tasks.goto(this.unit,site.pos,4))
+                return CC.taskHang
+            }else {
+                this.unit.pushIn3(site.pos)
+            }
         }
 
     }

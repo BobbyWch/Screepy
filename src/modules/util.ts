@@ -7,6 +7,9 @@ export const uu={
 	arrayRemove(obj:any,arr:Array<any>):void{
 		let i=arr.indexOf(obj)
 		if (i!=-1) arr.splice(i,1)
+		else {
+			console.log("Remove not found!"+obj._name)
+		}
 	},
 	objArrRemove(obj:CanEqual,arr:Array<CanEqual>):void{
 

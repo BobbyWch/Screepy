@@ -1,4 +1,5 @@
 import {XFrame} from "@/framework/frame";
+import {Colors} from "@/modules/Logger";
 
 XFrame.addMount(()=>{
     /**
@@ -8,22 +9,23 @@ XFrame.addMount(()=>{
      * @param self {boolean} 是否包括自己
      * @return {RoomPosition}
      */
-    // RoomPosition.prototype.findNear=function (pos,range,self){
-    //     let x,y,p
-    //     const terrain=Game.map.getRoomTerrain(this.roomName)
-    //     for (x=this.x-1;x<this.x+2;x++){
-    //         for (y=this.y-1;y<this.y+2;y++){
-    //             if (x==this.x&&y==this.y&&!self) continue//排除自己
-    //             if (x==pos.x&&y==pos.y) continue
-    //             if (terrain.get(x,y)==TERRAIN_MASK_WALL) continue
-    //             p=new RoomPosition(x,y,pos.roomName)
-    //             if (pos.getRangeTo(x,y)<=range&&p.lookFor(LOOK_CREEPS).length==0&&!p.lookFor(LOOK_STRUCTURES).find(s=>s.structureType!=STRUCTURE_RAMPART&&s.structureType!=STRUCTURE_CONTAINER)){
-    //                 return p
-    //             }
-    //         }
-    //     }
-    //     return null
-    // }
+    RoomPosition.prototype.findNear=function (pos,range,self){
+        let x,y
+        const terrain=Game.map.getRoomTerrain(this.roomName)
+        const room=Game.rooms[this.roomName]
+        for (x=this.x-1;x<this.x+2;x++){
+            for (y=this.y-1;y<this.y+2;y++){
+                if (x==this.x&&y==this.y&&!self) continue//排除自己
+                if (x==pos.x&&y==pos.y) continue
+                if (terrain.get(x,y)==TERRAIN_MASK_WALL) continue
+                if (pos.getRangeTo(x,y)<=range&&!room.lookForAt(LOOK_CREEPS,x,y).length
+                    &&!room.lookForAt(LOOK_STRUCTURES,x,y).find(s=>s.structureType!="rampart"&&s.structureType!="container")){
+                    return new RoomPosition(x,y,this.roomName)
+                }
+            }
+        }
+        return null
+    }
     RoomPosition.prototype.freeSpace=function (){
         let x,y,p=0
         const terrain=Game.map.getRoomTerrain(this.roomName)
@@ -73,6 +75,13 @@ XFrame.addMount(()=>{
     }
     RoomPosition.prototype.getStruct=function (type:StructureConstant){
         return Game.rooms[this.roomName].lookForAt(LOOK_STRUCTURES,this.x,this.y).find(s=>s.structureType==type)
+    }
+    RoomPosition.prototype.creep=function () {
+        const a=Game.rooms[this.roomName].lookForAt(LOOK_CREEPS,this.x,this.y)
+        if (a.length) return a[0]
+    }
+    RoomPosition.prototype.highlight=function (color=Colors.yellow){
+        new RoomVisual(this.roomName).circle(this,{fill:color})
     }
     // RoomPosition.prototype.nearByRampart=function (noCreep){
     //     return this.findInRange(FIND_MY_STRUCTURES,1).find(r=>r.structureType==STRUCTURE_RAMPART&&(!noCreep||!r.pos.lookFor(LOOK_CREEPS).filter(c=>c.memory.dontPullMe).length))

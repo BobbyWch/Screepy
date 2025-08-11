@@ -36,7 +36,12 @@ const enum CC{
 	taskOK=0,
 	taskFinish=1,
 	taskHang=2,//挂起，重新执行队列中的第一个task
-	taskReDo=3
+	taskReDo=3,
+
+	bodyTypeWorker=1,
+	bodyTypeUpgrade=2,
+	bodyTypeCarry=3,
+	bodyTypeBigCarry=4,
 }
 
 interface CanEqual{

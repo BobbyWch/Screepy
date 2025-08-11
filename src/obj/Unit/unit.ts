@@ -53,7 +53,7 @@ export class Unit implements RuntimeObject,CanEqual{
 				Runtime.addUnit(this)
 			}else throw new Error("missing home name:"+name)
 		}
-		if (this.memory.group) this.group=Colony.get(home).getWorkGroup(this.memory.group)
+		if (this.memory.group) this.group=Colony.get(this.memory.home).getWorkGroup(this.memory.group)
 
 		Unit.units[name]=this
 	}
@@ -94,7 +94,6 @@ export class Unit implements RuntimeObject,CanEqual{
 		this._mm=null
 		this.group=null
 	}
-
 	equal(obj: any): boolean {
 		return this._name==obj["_name"];
 	}
@@ -122,6 +121,19 @@ export class Unit implements RuntimeObject,CanEqual{
 			this._bif=result
 		}
 		return this._bif
+	}
+	bodyType():number{
+		if (!this.memory.body.bType){
+			const info=this.bodyInfo()
+			if (info[WORK]){
+				if (info[WORK]/info[CARRY]>3) this.memory.body.bType=CC.bodyTypeUpgrade
+				else this.memory.body.bType=CC.bodyTypeWorker
+			}else {
+				if (info[CARRY]/info[MOVE]>3) this.memory.body.bType=CC.bodyTypeBigCarry
+				else this.memory.body.bType=CC.bodyTypeCarry
+			}
+		}
+		return this.memory.body.bType
 	}
 }
 
@@ -226,6 +238,95 @@ export class TaskUnit extends Unit{
 		this.drawY++
 		this.creep.room.visual.text(taskName(task.type),pos,{color:taskColors[this.colorId],opacity:0.7})
 		this.creep.room.visual.line(this.creep.pos,pos)
+	}
+
+	/**
+	 * Extensive Action
+	 */
+	pushIn3(wish:RoomPosition){
+		if (this.creep.fatigue) return;
+		this.pos.highlight()
+		if (this.pos.getRangeTo(wish)>4) {
+			this.creep.moveTo(wish)
+			return
+		}else if (this.pos.getRangeTo(wish)==4){
+			let targetPos,creep:Creep,lastName
+			const q:Creep[]=[],nextCreep:{[n:string]:Creep}={}
+			const room=this.creep.room,terrain=room.getTerrain()
+			this.pos.forRange(1,(x,y)=>{
+				if (!targetPos&&wish.getRangeTo(x,y)<4&&terrain.get(x,y)!=TERRAIN_MASK_WALL){
+					const ss=room.lookForAt(LOOK_STRUCTURES,x,y).filter(s=>s.structureType!="road"&&s.structureType!="rampart"&&s.structureType!="container")
+					if (ss.length) return
+					const pos=new RoomPosition(x,y,room.name)
+					const c=pos.creep()
+					if (c){
+						const u=Unit.units[c.name] as TaskUnit
+						if (u&&u.theTask&&u.theTask.type==this.theTask.type&&u.creep.store.energy>10){
+							q.push(c)
+							nextCreep[c.name]=this.creep
+						}
+					}else {
+						targetPos = pos
+						lastName=this._name
+					}
+				}
+			})
+
+			while (!targetPos&&q.length){
+				creep=q.shift()
+				creep.pos.forRange(1,(x,y)=>{
+					if (!targetPos&&wish.getRangeTo(x,y)<4&&terrain.get(x,y)!=TERRAIN_MASK_WALL){
+						const ss=room.lookForAt(LOOK_STRUCTURES,x,y).filter(s=>s.structureType!="road"&&s.structureType!="rampart"&&s.structureType!="container")
+						if (ss.length) return
+						const pos=new RoomPosition(x,y,room.name)
+						const c=pos.creep()
+						if (c){
+							if (!nextCreep[c.name]){
+								const u=Unit.units[c.name] as TaskUnit
+								if (u.memory.currTask==TaskType.UPGRADE&&u.creep.store.energy>10){
+									q.push(c)
+									nextCreep[c.name]=creep
+								}
+							}
+						}else {
+							targetPos = pos
+							lastName=creep.name
+						}
+					}
+				})
+			}
+			if (targetPos) {
+				targetPos.highlight(Colors.red)
+				while (true) {
+					Game.creeps[lastName].moveTo(targetPos)
+					targetPos = Game.creeps[lastName].pos
+					if (!nextCreep[lastName]) break
+					lastName = nextCreep[lastName].name
+				}
+			}
+		}
+	}
+
+	/**
+	 * 对于2格及以内的爬，考虑从同range和外围爬身上拿eng，比例0.7
+	 * @return OK  完成
+	 *         ERR_NOT_IN_RANGE 距离超出
+	 *         ERR_NOT_FOUND    无爬可用
+	 */
+	engBorrow3(wish:RoomPosition){
+		let range=this.pos.getRangeTo(wish)
+		if (range>2) return ERR_NOT_IN_RANGE
+		//sort升序
+		const creeps=this.pos.findInRange(FIND_MY_CREEPS,1).filter(c=>(Unit.units[c.name] as TaskUnit).memory.currTask==this.theTask.type&&!c.storeLock).sort((a,b)=>{
+			const r=a.pos.getRangeTo(wish)-b.pos.getRangeTo(wish)
+			if (r>0) return -1
+			else if (r<0) return 1
+			else return b.store.energy-a.store.energy
+		})
+		if (creeps.length){
+			creeps[0].transfer(this.creep,RESOURCE_ENERGY,0|(creeps[0].store.energy*0.7))
+			return OK
+		}else return ERR_NOT_FOUND
 	}
 }
 function safePos(x,y,rn){

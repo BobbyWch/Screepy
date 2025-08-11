@@ -1,4 +1,4 @@
-import {WorkGroup} from "@/obj/WorkGroup/workgroup";
+import {FreeGroup, WorkGroup} from "@/obj/WorkGroup/workgroup";
 import {Hatchery} from "@/obj/Colony/parts/hatchery";
 import {TowerAI} from "@/obj/Colony/parts/tower";
 import {OLD_MEMORY, XFrame} from "@/framework/frame";
@@ -6,6 +6,7 @@ import {MineSite} from "@/obj/Colony/parts/MineSite";
 import {storeProxyH} from "@/modules/util";
 import {ColonyBase} from "@/obj/Colony/parts/colony_base";
 import {Colors} from "@/modules/Logger";
+import {Unit} from "@/obj/Unit/unit";
 
 export class Colony implements RuntimeObject,CanEqual{
 	room:Room
@@ -30,18 +31,21 @@ export class Colony implements RuntimeObject,CanEqual{
 	}
 
 	workGroups:WorkGroup<any>[]//无序！
+	freeUnits:FreeGroup
 
 	run(): void {
 		if (!this.room) return//存在一种极端情况，占有房间但无视野，未测试
-
+		this.clear()
 		this.stateWork()
 
+		this.base.run()
 		let o
-		for (o of this.workGroups) if(o)o.run()
+		for (o of this.workGroups) if(o) o.run()
 		this.hatchery.run()
 		if (this.memory.state==ColonyState.BOOT0) this.memory.state=ColonyState.BOOT
 
 		this.debugVisual()
+
 	}
 	//调试时修补内存
 	debugHotFix(){
@@ -80,6 +84,10 @@ export class Colony implements RuntimeObject,CanEqual{
 	getWorkGroup(type:WorkGroupType){
 		return this.workGroups.find(w=>w.type==type)
 	}
+	clear(){
+		this.base.clear()
+		this.mineSites.forEach(s=>s.clear())
+	}
 	_mm:ColonyMemory
 	get memory():ColonyMemory{
 		if (OLD_MEMORY&&this._mm) return this._mm
@@ -108,10 +116,16 @@ export class Colony implements RuntimeObject,CanEqual{
 		this.base=new ColonyBase(this)
 		this.hatchery=new Hatchery(this)
 		this.towerAI=new TowerAI(this)
+
+		if (!this.getWorkGroup(WorkGroupType.FREE)){
+			this.addWorkGroup(WorkGroupType.FREE)
+		}
 		let key
 		for (key in this.memory.workGroup){
 			this.workGroups.push(WorkGroup.createByType(this,key))
 		}
+
+		this.freeUnits=this.getWorkGroup(WorkGroupType.FREE) as FreeGroup
 
 		Colony.colonies[room.name]=this
 	}
@@ -124,6 +138,9 @@ export class Colony implements RuntimeObject,CanEqual{
 
 
 
+	addFree(unit:Unit){
+		this.freeUnits.addUnit(unit)
+	}
 	/**
 	 * 缓存对象
 	 */

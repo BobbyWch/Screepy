@@ -23,6 +23,7 @@ interface TaskUnitMemory extends UnitMemory{
 interface TaskMemory{
     sleep:number
     init:boolean
+    noCycle:boolean
 }
 interface HatchFillMem extends TaskMemory{
     targetId:Id<HatchEgg>

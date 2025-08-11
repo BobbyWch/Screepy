@@ -31,7 +31,7 @@ export class ColonyBase {
 
 		if (!colony.memory.base) {
 			colony.memory.base = {
-
+				completeLevel:0
 			} as ColBaseMemory
 
 		}
@@ -192,6 +192,11 @@ export class ColonyBase {
 				 */
 		}
 	}
+
+	/**
+	 * return 1 成功放置
+	 *        0 未放置
+	 */
 	putSite(){
 		if (this.memory.putSiteCd){
 			if (this.memory.putSiteCd>global.Gtime) return;
@@ -222,7 +227,7 @@ export class ColonyBase {
 			}
 		})
 		let ok=0,siteNum=room.find(FIND_MY_CONSTRUCTION_SITES).length,waitDestroy=false,hasReady=true
-		let o,result=-99
+		let o,result=-99,shdChkManual=false
 		for (o of selected){
 			if (siteNum>=CC.MAX_SITE) {
 				siteNum=99999
@@ -235,6 +240,7 @@ export class ColonyBase {
 			if (room.lookForAt(LOOK_STRUCTURES,o[0],o[1]).find((e:OwnedStructure)=>(e.my||!e.owner)&&e.structureType==o[2])||room.lookForAt(LOOK_CONSTRUCTION_SITES,o[0],o[1]).length) continue
 			//if (this.memory.prop.noRoad&&o[2]==STRUCTURE_ROAD) continue
 			if (room.controller.level>6&&o[2]==STRUCTURE_CONTAINER) continue
+			// if (o[2]==STRUCTURE_SPAWN&&)
 			hasReady=false
 			result=-99
 			if (o[2]==STRUCTURE_SPAWN){
@@ -246,8 +252,11 @@ export class ColonyBase {
 				ok=1
 				siteNum++
 			}else if (result==ERR_RCL_NOT_ENOUGH){
-				room.find(FIND_HOSTILE_STRUCTURES).filter(h=>h.structureType==o[2]&&h.destroy())
-				waitDestroy=true
+				const hos= room.find(FIND_HOSTILE_STRUCTURES).filter(h=>h.structureType==o[2])
+				if (hos.length){
+					waitDestroy=true
+					hos.forEach(h=>h.destroy())
+				}else shdChkManual=true//手动放置了规划外的建筑导致无法自动放置
 			}else if (result==ERR_FULL){
 				siteNum=99999
 				break;
@@ -264,6 +273,11 @@ export class ColonyBase {
 
 		if (siteNum==99999){
 			this.memory.putSiteCd=global.Gtime+2000
+		}
+		if (shdChkManual){
+			if (siteNum==0){
+				hasReady=true
+			}else this.memory.putSiteCd=global.Gtime+113
 		}
 
 		if (ok&&!hasReady) {
@@ -325,14 +339,83 @@ export class ColonyBase {
 			}
 		}
 	}
-	getBuild(){
-		return this.colony.room.find(FIND_CONSTRUCTION_SITES)[0]
+	startBuild(){
+		if (!this.memory.build){
+
+			this.memory.build={}
+			this.colony.addWorkGroup(WorkGroupType.BUILD)
+		}
+	}
+	endBuild(){
+		if (this.memory.build){
+			this.colony.getWorkGroup(WorkGroupType.BUILD).finalize()
+			delete this.memory.build
+		}
+	}
+	startRepair(){
+		if (!this.memory.repair){
+
+		}
+	}
+	endRepair(){
+		if (this.memory.repair){
+
+		}
+	}
+	site:ConstructionSite
+	getBuild():ConstructionSite{
+		if (!this.site){
+			if (this.memory.build){
+				const info=this.memory.build.current
+				if (info){
+					this.site=Game.getObjectById(info.id)
+					if (!this.site){
+						this.buildCb()
+						delete this.memory.build.current
+						return this.getBuild()
+					}
+				}else {
+					const sites=this.colony.room.find(FIND_MY_CONSTRUCTION_SITES)
+					if (sites.length){
+						this.site=sites[0]
+						this.memory.build.current={
+							id:this.site.id,
+							x:this.site.pos.x,
+							y:this.site.pos.y,
+							type:this.site.structureType
+						}
+					}else {
+						this.endBuild()
+						return null
+					}
+				}
+			}else return null
+		}
+		return this.site
+	}
+	buildCb(){
+		const info=this.memory.build.current
+		const structure=this.colony.room.lookForAt(LOOK_STRUCTURES,info.x,info.y).find(s=>s.structureType==info.type)
+		if (!structure){
+			//??site被破坏
+			return
+		}
+		switch (structure.structureType){
+
+		}
 	}
 	run(){
-		if (this.memory.bluePrint) this.putSite()
+		if (this.memory.bluePrint) {
+			if (this.putSite()){
+				this.startBuild()
+			}
+		}
 		if (global.Gtime%53==0){
 			this.scan()
 		}
+	}
+	clear(){
+		this.site=null
 	}
 	_mm:ColBaseMemory
 	get memory():ColBaseMemory{

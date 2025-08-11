@@ -53,6 +53,7 @@ export const XFrame= {
 					msg += "\nError stack:\n" + _.escape(e.stack)
 					console.log(msg)
 					Game.notify(msg, 30)
+					Memory.err.push({time:global.Gtime,msg})
 				} else throw e
 			}
 		}
@@ -100,5 +101,6 @@ export const XFrame= {
 		if (!Memory.colony) Memory.colony = {}
 		if (!Memory.units) Memory.units = {}
 		if (!Memory.whiteList) Memory.whiteList=[]
+		if (!Memory.err) Memory.err=[]
 	}
 }

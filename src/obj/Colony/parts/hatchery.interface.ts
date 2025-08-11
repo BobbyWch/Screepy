@@ -25,6 +25,21 @@ interface ColBaseMemory{
 
 	recNum:number
 	recData:{[type:string]:string[]}
+
+	build:BuildData
+	repair:RepairData
+}
+interface SiteInfo{
+	id:Id<ConstructionSite>
+	x:number
+	y:number
+	type:StructureConstant
+}
+interface BuildData{
+	current?:SiteInfo
+}
+interface RepairData{
+
 }
 
 type ZippedBodyInfo=[BodyPartConstant,number][]
@@ -34,4 +49,5 @@ const enum BodyGenType{
 interface BodyGen{
 	type:BodyGenType
 	data:ZippedBodyInfo|BodyPartConstant[]
+	bType?:number
 }

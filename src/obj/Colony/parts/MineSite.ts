@@ -54,10 +54,9 @@ export class MineSite{
             Logger.err("try binding binded unit")
             return
         }
-        console.log("reg carry",unit._name)
         unit.memory.reg.mineSite={
             id:this.id,
-            num:unit.creep.store.getFreeCapacity()
+            num:unit.creep.store.getCapacity()
         }
         this.memory.used+=unit.memory.reg.mineSite.num
     }
@@ -67,7 +66,6 @@ export class MineSite{
             Logger.err("try unbinding unbinded unit")
             return
         }
-        console.log("unreg carry",unit._name)
         this.memory.used-=unit.memory.reg.mineSite.num
         delete unit.memory.reg.mineSite
     }
@@ -77,7 +75,6 @@ export class MineSite{
             Logger.err("try binding binded work")
             return
         }
-        console.log("reg work",JSON.stringify(unit.bodyInfo()))
         unit.memory.reg.mineSite={
             id:this.id,
             num:-1
@@ -90,13 +87,16 @@ export class MineSite{
             Logger.err("try unbinding unbinded work")
             return
         }
-        console.log("unreg work",unit._name)
-        this.memory.used-=unit.bodyInfo()[WORK]
+        this.memory.workNum-=unit.bodyInfo()[WORK]
         delete unit.memory.reg.mineSite
     }
-
+    clear(){
+        this._src=null
+    }
+    _src:Source
     get source():Source{
-        return Game.getObjectById(this.id)
+        if (!this._src) this._src=Game.getObjectById(this.id)
+        return this._src
     }
 
     _mm:MineSiteMemory

@@ -20,14 +20,14 @@ const pluginDeploy = config && config.copyPath ?
                 src: 'dist/main.js',
                 dest: config.copyPath
             },
-            {
-                src: 'src/mount/room/plan/algo_wasm_priorityqueue.wasm',
-                dest: config.copyPath
-            },
-            {
-                src: 'src/mount/room/plan/autoPlanner63.js',
-                dest: config.copyPath
-            },
+            // {
+            //     src: 'src/lib/algo_wasm_priorityqueue.wasm',
+            //     dest: config.copyPath
+            // },
+            // {
+            //     src: 'src/lib/autoPlanner63.js',
+            //     dest: config.copyPath
+            // },
             {
                 src: 'src/lib/helper_roomResource.js',
                 dest: config.copyPath
@@ -61,6 +61,12 @@ export default {
         sourcemap: false//这里设置是否生成.map
     },
     plugins: [
+        {
+            name: 'log-a-plugin',
+            buildEnd() {
+                console.error("注意：这个版本不应上传screeps.com")//原因：autoPlanner63.js和wasm
+            }
+        },
         // 清除上次编译成果
         clear({ targets: ["dist"] }),
         // 打包依赖
@@ -77,14 +83,14 @@ export default {
 //         }),
         copy({
             targets: [
-                {
-                    src: 'src/mount/room/plan/algo_wasm_priorityqueue.wasm',
-                    dest: 'dist'
-                },
-                {
-                    src: 'src/mount/room/plan/autoPlanner63.js',
-                    dest: 'dist'
-                },
+                // {
+                //     src: 'src/lib/algo_wasm_priorityqueue.wasm',
+                //     dest: 'dist'
+                // },
+                // {
+                //     src: 'src/lib/autoPlanner63.js',
+                //     dest: 'dist'
+                // },
                 {
                     src: 'src/lib/helper_roomResource.js',
                     dest: 'dist'
