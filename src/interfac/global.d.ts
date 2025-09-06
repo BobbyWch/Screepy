@@ -42,6 +42,9 @@ const enum CC{
 	bodyTypeUpgrade=2,
 	bodyTypeCarry=3,
 	bodyTypeBigCarry=4,
+
+	wishModeActive=1,
+	wishModeEco=2
 }
 
 interface CanEqual{

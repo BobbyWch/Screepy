@@ -166,6 +166,8 @@ export class TaskUnit extends Unit{
 			if (this.theTask.type!=this.lastRun) console.log(this._name,"run:"+taskName(this.theTask.type))
 			result=this.theTask.run()
 			this.drawTask(this.theTask)
+			this.creep.room.visual.text(this.memory.role,this.pos)
+
 			this.lastRun=this.theTask.type
 			if (!result) break
 			switch (result){
@@ -238,6 +240,7 @@ export class TaskUnit extends Unit{
 		this.drawY++
 		this.creep.room.visual.text(taskName(task.type),pos,{color:taskColors[this.colorId],opacity:0.7})
 		this.creep.room.visual.line(this.creep.pos,pos)
+
 	}
 
 	/**

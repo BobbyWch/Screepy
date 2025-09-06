@@ -39,14 +39,18 @@ export class MineSite{
             }else this.memory.state=MineSiteState.drop
         }
     }
+    _engL:number
     energyLeft():number{
-        if (this.memory.state==MineSiteState.drop){
-            return _.sum(this.source.pos.findInRange(FIND_DROPPED_RESOURCES,1),r=>r.amount)-this.memory.used
-        }else {
-            const tar=this.memory.state==MineSiteState.link?this.link:this.container
-            if (tar) return tar.store.energy-this.memory.used
-            else return 0
+        if (this._engL==-1){
+            if (this.memory.state == MineSiteState.drop) {
+                this._engL=_.sum(this.source.pos.findInRange(FIND_DROPPED_RESOURCES, 1), r => r.amount) - this.memory.used
+            } else {
+                const tar = this.memory.state == MineSiteState.link ? this.link : this.container
+                if (tar) this._engL= tar.store.energy - this.memory.used
+                else this._engL=0
+            }
         }
+        return this._engL
     }
     regGetter(unit:Unit){
         if (unit.memory.reg.mineSite){
@@ -92,6 +96,7 @@ export class MineSite{
     }
     clear(){
         this._src=null
+        this._engL=-1
     }
     _src:Source
     get source():Source{

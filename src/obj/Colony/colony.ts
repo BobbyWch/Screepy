@@ -1,9 +1,9 @@
-import {FreeGroup, WorkGroup} from "@/obj/WorkGroup/workgroup";
+import {FreeGroup, UpgradeGroup, WishNumGroup, WorkGroup} from "@/obj/WorkGroup/workgroup";
 import {Hatchery} from "@/obj/Colony/parts/hatchery";
 import {TowerAI} from "@/obj/Colony/parts/tower";
 import {OLD_MEMORY, XFrame} from "@/framework/frame";
 import {MineSite} from "@/obj/Colony/parts/MineSite";
-import {storeProxyH} from "@/modules/util";
+import {storeProxyH, uu} from "@/modules/util";
 import {ColonyBase} from "@/obj/Colony/parts/colony_base";
 import {Colors} from "@/modules/Logger";
 import {Unit} from "@/obj/Unit/unit";
@@ -14,6 +14,8 @@ export class Colony implements RuntimeObject,CanEqual{
 	towerAI:TowerAI
 	mineSites:MineSite[]
 	base: ColonyBase
+
+	activeG:WishNumGroup<any>
 
 	nuker:StructureNuker;
 	factory:StructureFactory;
@@ -39,8 +41,10 @@ export class Colony implements RuntimeObject,CanEqual{
 		this.stateWork()
 
 		this.base.run()
-		let o
-		for (o of this.workGroups) if(o) o.run()
+
+		for (let i=this.workGroups.length-1;i>=0;i--) {
+			this.workGroups[i].run()
+		}
 		this.hatchery.run()
 		if (this.memory.state==ColonyState.BOOT0) this.memory.state=ColonyState.BOOT
 
@@ -61,6 +65,7 @@ export class Colony implements RuntimeObject,CanEqual{
 			}
 		}
 	}
+	engHistory:number[]
 	stateWork():void{
 		switch (this.memory.state){
 			case ColonyState.BOOT0:
@@ -68,10 +73,33 @@ export class Colony implements RuntimeObject,CanEqual{
 				//刚respawn
 				this.addWorkGroup(WorkGroupType.HARVEST)
 				this.addWorkGroup(WorkGroupType.FILL)
+				this.addWorkGroup(WorkGroupType.UPGRADE)
 				break
 			case ColonyState.BOOT:
-				if (!this.getWorkGroup(WorkGroupType.UPGRADE)&&this.hatchery.memory.task.length==0)
-					this.addWorkGroup(WorkGroupType.UPGRADE)
+				if (global.Gtime%11==0){
+					const eng=_.sum(this.mineSites,s=>s.energyLeft())
+					if (!this.engHistory) this.engHistory=[]
+					this.engHistory.push(eng)
+					if (this.engHistory.length>5){
+						if (this.engHistory.length>10) this.engHistory.shift()
+						const avg=_.sum(this.engHistory)/this.engHistory.length
+						if (avg>1000){
+							if (this.activeG) this.activeG.memory.num++
+
+							this.engHistory[3]-=500
+						}else if (avg<600){
+							if (this.activeG) this.activeG.memory.num=(this.activeG.memory.num-1)||1
+						}
+						if (this.base.memory.build){
+							const upg=this.getWorkGroup(WorkGroupType.UPGRADE) as UpgradeGroup
+							if (upg){
+								if (upg.memory.num>1){
+									upg.eco()
+								}
+							}
+						}
+					}
+				}
 		}
 	}
 	setState(state:ColonyState):void{
@@ -83,6 +111,12 @@ export class Colony implements RuntimeObject,CanEqual{
 	}
 	getWorkGroup(type:WorkGroupType){
 		return this.workGroups.find(w=>w.type==type)
+	}
+	delWorkGroup(type:WorkGroupType){
+		const g=this.getWorkGroup(type)
+		g.finalize()
+		uu.arrayRemove(g,this.workGroups)
+		delete this.memory.workGroup[type]
 	}
 	clear(){
 		this.base.clear()

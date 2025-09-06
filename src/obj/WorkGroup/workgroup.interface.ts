@@ -8,9 +8,12 @@ interface WorkerPlan{
 interface WorkGroupMemory{
 	units:{[r:string]:string[]}
 }
-interface HarvestGMemory extends WorkGroupMemory{
-	num:number
+interface HarvestGMemory extends WishMemory{
+
 }
-interface FillGMem extends WorkGroupMemory{
+interface FillGMem extends WishMemory{
+
+}
+interface WishMemory extends WorkGroupMemory{
 	num:number
 }

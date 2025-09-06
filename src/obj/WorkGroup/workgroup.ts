@@ -68,8 +68,8 @@ export class WorkGroup<memType extends WorkGroupMemory> implements RuntimeObject
 		if (!this.units[role]) return 0
 		return this.units[role].length
 	}
-	freeUnit(unit:Unit){
-		this.removeUnit(unit)
+	freeUnit(unit:Unit,noRemove?:boolean){
+		if(!noRemove) this.removeUnit(unit)
 		this.colony.addFree(unit)
 		if ((unit as TaskUnit).theTask) (unit as TaskUnit).theTask.memory.noCycle=true
 	}
@@ -92,6 +92,52 @@ export class WorkGroup<memType extends WorkGroupMemory> implements RuntimeObject
 		return unit
 	}
 
+}
+export class WishNumGroup<memType extends WishMemory> extends WorkGroup<memType>{
+	mRole:string
+	bType:number
+	mode:number
+	constructor(colony: Colony,type:WorkGroupType,mainRole:string,mainType:number,num:number) {
+		super(colony, type);
+		this.mRole=mainRole
+		this.bType=mainType
+		this.memory.num=num
+	}
+	run() {
+		super.run();
+		if (this.roleNum(this.mRole)<this.memory.num){
+			let unit=this.mallocUnit(this.bType)
+			if (unit){
+				unit.setRole(this.mRole)
+			}else if (this.mode==CC.wishModeActive){
+				unit=this.newRole(this.mRole)
+			}
+
+			if (unit) {
+				this.onUnitAdd(unit)
+			}
+		}
+	}
+	activate(){
+		this.mode=CC.wishModeActive
+		this.colony.activeG=this
+	}
+	eco(){
+		this.memory.num=1
+		const maxUnit=_.max(this.units[this.mRole],u=>u.creep.ticksToLive)
+		let u:Unit
+		for (u of this.units[this.mRole]){
+			if (u._name!=maxUnit._name){
+				this.freeUnit(u,true)
+			}
+		}
+		this.units[this.mRole]=[maxUnit]
+		this.memory.units[this.mRole]=[maxUnit._name]
+		this.mode=CC.wishModeEco
+	}
+	onUnitAdd(unit:TaskUnit){
+		throw new Error("should implement")
+	}
 }
 class HarvestGroup extends WorkGroup<HarvestGMemory> {
 	constructor(colony: Colony) {
@@ -142,37 +188,26 @@ class HatchFillGroup extends WorkGroup<FillGMem> {
 		}
 	}
 }
-export class UpgradeGroup extends WorkGroup<FillGMem> {
+export class UpgradeGroup extends WishNumGroup<FillGMem> {
 	constructor(colony: Colony) {
-		super(colony, WorkGroupType.UPGRADE);
-		if (!this.memory.num){
-			this.memory.num=3
-		}
+		super(colony, WorkGroupType.UPGRADE,Roles.upgrader,CC.bodyTypeUpgrade,3);
 	}
 	run() {
 		super.run()
-		if (this.roleNum(Roles.upgrader)<this.memory.num){
-			let unit=this.newRole(Roles.upgrader)
-			unit.addTask(Tasks.upgrade(unit))
-		}
 		if (global.Gtime%13==0){
 			if (_.sum(this.colony.mineSites,s=>s.energyLeft())>1000&&this.memory.num<20) this.memory.num++
 		}
 	}
-}
-class BuildGroup extends WorkGroup<any>{
-	constructor(colony: Colony) {
-		super(colony, WorkGroupType.BUILD);
-		if (!this.memory.num){
-			this.memory.num=2
-		}
+	onUnitAdd(unit: TaskUnit) {
+		unit.addTask(Tasks.upgrade(unit))
 	}
-	run() {
-		super.run();
-		if (this.roleNum(Roles.builder)<this.memory.num){
-			let unit=this.newRole(Roles.builder)
-			unit.addTask(Tasks.build(unit))
-		}
+}
+export class BuildGroup extends WishNumGroup<any>{
+	constructor(colony: Colony) {
+		super(colony, WorkGroupType.BUILD,Roles.builder,CC.bodyTypeWorker,2);
+	}
+	onUnitAdd(unit: TaskUnit) {
+		unit.addTask(Tasks.build(unit))
 	}
 }
 export class FreeGroup extends WorkGroup<any>{

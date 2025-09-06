@@ -2,7 +2,7 @@ import {Colony} from "@/obj/Colony/colony";
 import {OLD_MEMORY} from "@/framework/frame";
 import {SuperMove} from "@/lib/betterMove";
 import {uu} from "@/modules/util";
-import {Logger} from "@/modules/Logger";
+import {BuildGroup} from "@/obj/WorkGroup/workgroup";
 
 interface Plan63Proto{
 	HelperVisual:{
@@ -23,7 +23,7 @@ interface StructMap{
 	[type:string]:[number,number][]
 }
 //@ts-ignore
-export const planner63=require("autoPlanner63")
+export const planner63:Plan63Proto=require("autoPlanner63")
 export class ColonyBase {
 	colony:Colony
 	constructor(colony:Colony) {
@@ -341,14 +341,14 @@ export class ColonyBase {
 	}
 	startBuild(){
 		if (!this.memory.build){
-
 			this.memory.build={}
-			this.colony.addWorkGroup(WorkGroupType.BUILD)
+			this.colony.addWorkGroup(WorkGroupType.BUILD);
+			(this.colony.getWorkGroup(WorkGroupType.BUILD) as BuildGroup).activate()
 		}
 	}
 	endBuild(){
 		if (this.memory.build){
-			this.colony.getWorkGroup(WorkGroupType.BUILD).finalize()
+			this.colony.delWorkGroup(WorkGroupType.BUILD)
 			delete this.memory.build
 		}
 	}
